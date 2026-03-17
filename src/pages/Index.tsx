@@ -94,12 +94,8 @@ const Index: React.FC = () => {
   }, []);
 
   const handleNavClick = useCallback((id: Route) => {
-    if (id === 'ticket') {
-      setTicketExpanded(prev => !prev);
-    } else {
-      setActiveRoute(id);
-      if (isMobile) setSidebarOpen(false);
-    }
+    setActiveRoute(id);
+    if (isMobile) setSidebarOpen(false);
   }, [isMobile]);
 
   const meta = ROUTE_META[activeRoute];
