@@ -4,6 +4,7 @@ import {
   ChevronDown, PlusCircle, Activity, Menu, Bell, 
   ChevronRight, LogOut, User, Monitor 
 } from 'lucide-react';
+import SingleConfig from '@/components/SingleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
@@ -196,31 +197,34 @@ const Index: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, ease: EASING }}
-              className="bg-card rounded-2xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.05),0_10px_20px_-5px_rgba(0,0,0,0.04)] overflow-hidden"
             >
-              <div className="p-8 md:p-12 flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mb-6 border border-border">
-                  <PageIcon className="w-10 h-10 text-muted-foreground/50" />
-                </div>
-                <h1 className="text-3xl font-bold text-foreground mb-3 tracking-tight">{meta.title}</h1>
-                <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">{meta.description}</p>
-                
-                <div className="w-full space-y-4">
-                  <div className="h-4 bg-muted rounded-full w-3/4 mx-auto animate-pulse" />
-                  <div className="h-4 bg-muted rounded-full w-1/2 mx-auto animate-pulse" />
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="h-24 bg-muted rounded-xl border border-dashed border-border flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Module {i}</span>
+              {activeRoute === 'single-config' ? (
+                <SingleConfig />
+              ) : (
+                <div className="bg-card rounded-2xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.05),0_10px_20px_-5px_rgba(0,0,0,0.04)] overflow-hidden">
+                  <div className="p-8 md:p-12 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mb-6 border border-border">
+                      <PageIcon className="w-10 h-10 text-muted-foreground/50" />
+                    </div>
+                    <h1 className="text-3xl font-bold text-foreground mb-3 tracking-tight">{meta.title}</h1>
+                    <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">{meta.description}</p>
+                    <div className="w-full space-y-4">
+                      <div className="h-4 bg-muted rounded-full w-3/4 mx-auto animate-pulse" />
+                      <div className="h-4 bg-muted rounded-full w-1/2 mx-auto animate-pulse" />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="h-24 bg-muted rounded-xl border border-dashed border-border flex items-center justify-center">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Module {i}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                    <button className="mt-12 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-md shadow-primary/20 active:scale-95">
+                      Initialize Module
+                    </button>
                   </div>
                 </div>
-
-                <button className="mt-12 px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-md shadow-primary/20 active:scale-95">
-                  Initialize Module
-                </button>
-              </div>
+              )}
             </motion.div>
           </div>
         </div>
