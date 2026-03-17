@@ -84,6 +84,15 @@ const Index: React.FC = () => {
     return () => window.removeEventListener('resize', check);
   }, []);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const route = (e as CustomEvent).detail as Route;
+      setActiveRoute(route);
+    };
+    window.addEventListener('navigate', handler);
+    return () => window.removeEventListener('navigate', handler);
+  }, []);
+
   const handleNavClick = useCallback((id: Route) => {
     if (id === 'ticket') {
       setTicketExpanded(prev => !prev);
