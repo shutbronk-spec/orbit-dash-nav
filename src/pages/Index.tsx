@@ -5,6 +5,7 @@ import {
   ChevronRight, LogOut, User, Monitor 
 } from 'lucide-react';
 import SingleConfig from '@/components/SingleConfig';
+import BatchConfig from '@/components/BatchConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
