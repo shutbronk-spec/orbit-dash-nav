@@ -221,6 +221,8 @@ const Index: React.FC = () => {
                 <TicketPage initialPage="monitoring" />
               ) : activeRoute === 'pnp-export' ? (
                 <PnpExport />
+              ) : activeRoute === 'guide' ? (
+                <GuidePage />
               ) : (
                 <div className="bg-card rounded-2xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.05),0_10px_20px_-5px_rgba(0,0,0,0.04)] overflow-hidden">
                   <div className="p-8 md:p-12 flex flex-col items-center text-center">
