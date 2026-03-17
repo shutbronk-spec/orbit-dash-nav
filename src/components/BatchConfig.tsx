@@ -171,7 +171,51 @@ const BatchConfig: React.FC = () => {
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [fileName, setFileName] = useState('');
   const [copied, setCopied] = useState(false);
+  const [pnpScript, setPnpScript] = useState<string>('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // --- Load PnP Export data on mount ---
+  React.useEffect(() => {
+    const raw = localStorage.getItem('pnp_export_data');
+    const presetName = localStorage.getItem('pnp_export_preset');
+    const count = localStorage.getItem('pnp_export_count');
+    if (!raw || !presetName) return;
+
+    try {
+      const exportData = JSON.parse(raw) as { Username: string; SN: string }[];
+      const preset = presetName as Tab;
+      const presetSettings = TAB_PRESETS[preset];
+      if (!presetSettings || exportData.length === 0) return;
+
+      // Apply preset
+      setActiveTab(preset);
+      setSettings(presetSettings);
+
+      // Parse rows using same logic
+      const parsed = parseExcelRows(
+        exportData.map(d => ({ Username: d.Username, SN: d.SN }))
+      );
+      setRows(parsed);
+
+      // Generate script directly
+      const script = generateBatchScript(parsed, presetSettings);
+      setPnpScript(script);
+      setFileName(`PnP Export (${count || exportData.length} rows)`);
+
+      // Clear localStorage
+      localStorage.removeItem('pnp_export_data');
+      localStorage.removeItem('pnp_export_preset');
+      localStorage.removeItem('pnp_export_count');
+
+      // Show success toast
+      setTimeout(() => {
+        const { toast } = require('sonner');
+        toast.success(`${count || exportData.length} config berhasil di-generate!`);
+      }, 300);
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
 
   const updateSetting = (key: keyof BatchSettings, value: string) =>
     setSettings(prev => ({ ...prev, [key]: value }));

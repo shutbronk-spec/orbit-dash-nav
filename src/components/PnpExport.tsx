@@ -326,14 +326,15 @@ const PnpExport: React.FC = () => {
   const handleGenerate = () => {
     if (!preset) { toast.error('Pilih preset terlebih dahulu!'); return; }
     if (processedRows.length === 0) { toast.error('Tidak ada data.'); return; }
-    // Store processed data for BatchConfig to consume
+    // Store processed data + preset for BatchConfig to consume
     const exportData = processedRows.map(r => ({
       Username: r.usernameHasil,
       SN: r.sn,
     }));
     localStorage.setItem('pnp_export_data', JSON.stringify(exportData));
     localStorage.setItem('pnp_export_preset', preset);
-    toast.success('Data siap! Pindah ke Batch Config...');
+    localStorage.setItem('pnp_export_count', String(processedRows.length));
+    toast.success(`${processedRows.length} config siap! Pindah ke Batch Config...`);
     // Dispatch custom event for navigation
     window.dispatchEvent(new CustomEvent('navigate', { detail: 'batch-config' }));
   };
