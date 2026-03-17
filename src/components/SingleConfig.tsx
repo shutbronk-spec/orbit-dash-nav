@@ -24,7 +24,7 @@ interface FormState {
 }
 
 const INITIAL_FORM: FormState = {
-  userPppoe: '', serialNumber: '', mode: 'pppoe-only', rack: '0', slot: '1', port: '1', ponId: '',
+  userPppoe: '', serialNumber: '', mode: 'pppoe-only', rack: '1', slot: '1', port: '1', ponId: '',
   ipStatic: '', vlan: '1000', password: 'korinanet79', tcont: 'UP-50M', gemport: 'DOWN-50M',
 };
 
@@ -33,27 +33,123 @@ const TCONTS = ['UP-30M', 'UP-50M', 'UP-100M'];
 const GEMPORTS = ['DOWN-30M', 'DOWN-50M', 'DOWN-100M'];
 const SLOTS = Array.from({ length: 16 }, (_, i) => String(i + 1));
 
+const CODE_MAP: Record<string, number> = {
+  D:2,T:3,E:4,K:5,G:6,J:7,P:8,B:13,N:15,Z:17,Q:18,Y:19,M:22,V:26,U:27,W:21,F:14,X:16,C:23,
+  A:28,L:24,H:25,S:11,AA:29,AB:31,AC:32,AD:33,AE:34,AF:35,
+  CA:41,CB:42,CC:43,CD:44,CE:45,DA:51,DB:52,DC:53,DD:54,
+  EA:61,EB:62,EC:63,ED:64,EE:65,EF:66,EG:67,EH:68,EI:69,
+  FA:71,FB:72,FC:73,FD:74,FE:75,FF:76,FG:77,FH:78,FI:79,
+};
+
+const SLOT_MAP: Record<string, number> = {
+  J:7,T:4,P:3,M:2,F:5,S:6,LG:1,PD:1,PH:2,L:2,C:1,B:1,
+  BM:1,CH:2,BR:2,JT:2,PT:1,BT:2,PL:1,PS:2,
+};
+
+function calcIpStatic(userPppoe: string, tab: Tab): string {
+  if (!userPppoe) return '';
+  const parts = userPppoe.split('-');
+  const skipIdx = parts.length - 2;
+
+  for (let i = 0; i < parts.length; i++) {
+    if (i === skipIdx) continue;
+    const seg = parts[i];
+    const m = seg.match(/^([A-Za-z]+)(\d+)$/);
+    if (m) {
+      const code = m[1].toUpperCase();
+      const num = parseInt(m[2], 10);
+      if (CODE_MAP[code] !== undefined) return `10.250.${CODE_MAP[code]}.${num}`;
+    }
+  }
+
+  for (let i = 0; i < parts.length; i++) {
+    if (i === skipIdx) continue;
+    const num = parseInt(parts[i], 10);
+    if (!isNaN(num) && String(num) === parts[i]) {
+      if (num >= 1 && num <= 250) {
+        if (tab === 'TUNGGILIS') return `10.250.9.${num}`;
+        if (tab === 'CIBATU') return `10.250.12.${num}`;
+        return `10.250.0.${num}`;
+      }
+      if (num >= 251 && num <= 500) return `10.250.1.${num - 250}`;
+    }
+  }
+  return '';
+}
+
+function parseRackSlotPortPon(userPppoe: string, tab: Tab): { rack: string; slot: string; port: string; ponId: string } {
+  if (!userPppoe) return { rack: '1', slot: '1', port: '1', ponId: '' };
+  const parts = userPppoe.split('-');
+  if (parts.length < 2) return { rack: '1', slot: '1', port: '1', ponId: '' };
+
+  const last = parts[parts.length - 1];
+  const secondLast = parts[parts.length - 2];
+  const ponId = /^\d+$/.test(last) ? last : '';
+
+  const m = secondLast.match(/^([A-Za-z]+)(\d+)$/);
+  if (m) {
+    const code = m[1].toUpperCase();
+    const portNum = m[2];
+    let slot: number | undefined;
+    if ((tab === 'TUNGGILIS' || tab === 'CIBATU') && code === 'P') {
+      slot = 1;
+    } else {
+      slot = SLOT_MAP[code];
+    }
+    if (slot !== undefined) {
+      return { rack: '1', slot: String(slot), port: portNum, ponId };
+    }
+  }
+
+  if (/^\d+$/.test(secondLast) && /^\d+$/.test(last)) {
+    return { rack: '1', slot: '2', port: secondLast, ponId: last };
+  }
+
+  return { rack: '1', slot: '1', port: '1', ponId };
+}
+
 const generateScript = (tab: Tab, f: FormState): string => {
   if (!f.userPppoe && !f.serialNumber) return '# Fill in the form to generate CLI script...\n';
-  return [
-    `! --- ${tab} Single Config Script ---`,
-    `!`,
-    `configure terminal`,
-    f.serialNumber ? `onu add sn ${f.serialNumber} mode ${f.mode}` : '',
-    `interface gpon ${f.rack}/${f.slot}/${f.port}`,
-    f.ponId ? `  onu ${f.ponId} profile line auto` : '',
-    f.vlan ? `  vlan ${f.vlan}` : '',
-    f.userPppoe ? `  pppoe user ${f.userPppoe}` : '',
-    f.password ? `  password ${f.password}` : '',
-    f.tcont ? `  tcont ${f.tcont}` : '',
-    f.gemport ? `  gemport ${f.gemport}` : '',
-    f.ipStatic ? `  ip address ${f.ipStatic} auto` : '',
-    `  exit`,
-    `!`,
-    `end`,
-    `write memory`,
-    '',
-  ].filter(Boolean).join('\n');
+  const r = f.rack, s = f.slot, p = f.port, pid = f.ponId || '1';
+  const onuType = tab === 'TUNGGILIS' ? 'ZTE-F609' : 'ZTEG-F609';
+  const sn = f.serialNumber || 'ZTEG12345678';
+  const intf = `${r}/${s}/${p}`;
+
+  let script = `conf t
+
+interface gpon-olt_${intf}
+no onu ${pid}
+onu ${pid} type ${onuType} sn ${sn}
+exit
+
+interface gpon-onu_${intf}:${pid}
+name ${f.userPppoe}
+tcont 1 profile ${f.tcont}
+tcont 2 profile ${f.tcont}
+gemport 1 tcont 1
+gemport 1 traffic-limit downstream ${f.gemport}
+gemport 2 tcont 2
+gemport 2 traffic-limit downstream ${f.gemport}
+service-port 1 vport 1 user-vlan ${f.vlan} vlan ${f.vlan}
+service-port 2 vport 1 user-vlan 200 vlan 200
+pppoe-intermediate-agent enable vport 1
+exit
+
+pon-onu-mng gpon-onu_${intf}:${pid}
+service pppoe gemport 1 vlan ${f.vlan}
+service hs gemport 1 vlan 200
+wan-ip 1 mode pppoe username ${f.userPppoe} password ${f.password} vlan-profile PPPOE${f.vlan} host 1`;
+
+  if (f.mode === 'pppoe-voucher') {
+    script += `\nwan-ip 3 mode pppoe username ${f.userPppoe}@voucher password ${f.password} vlan-profile PPPOE${f.vlan} host 1`;
+  }
+
+  script += `\nwan-ip 2 mode static ip-profile static ip-address ${f.ipStatic || '10.250.0.1'} mask 255.255.0.0 vlan-profile STATIC200 host 2
+security-mgmt 1 state enable mode forward protocol web
+end
+wr`;
+
+  return script;
 };
 
 const SingleConfig: React.FC = () => {
@@ -67,8 +163,25 @@ const SingleConfig: React.FC = () => {
   const handleTabSwitch = (tab: Tab) => {
     setActiveTab(tab);
     const preset = TAB_PRESETS[tab];
-    setForm(prev => ({ ...prev, ...preset }));
+    setForm(prev => {
+      const updated = { ...prev, ...preset };
+      if (prev.userPppoe) {
+        const parsed = parseRackSlotPortPon(prev.userPppoe, tab);
+        const ip = calcIpStatic(prev.userPppoe, tab);
+        return { ...updated, ...parsed, ipStatic: ip };
+      }
+      return updated;
+    });
   };
+
+  // Auto-fill on userPppoe change
+  useEffect(() => {
+    if (!form.userPppoe) return;
+    const parsed = parseRackSlotPortPon(form.userPppoe, activeTab);
+    const ip = calcIpStatic(form.userPppoe, activeTab);
+    setForm(prev => ({ ...prev, ...parsed, ipStatic: ip }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.userPppoe, activeTab]);
 
   const output = useMemo(() => generateScript(activeTab, form), [activeTab, form]);
 
@@ -82,37 +195,30 @@ const SingleConfig: React.FC = () => {
 
   return (
     <div className="w-full">
-      {/* Tabs */}
       <div className="flex gap-1 mb-3">
         {TABS.map(tab => (
-          <button
-            key={tab}
-            onClick={() => handleTabSwitch(tab)}
+          <button key={tab} onClick={() => handleTabSwitch(tab)}
             className={`px-4 py-1.5 text-xs font-semibold rounded-t-lg border border-b-0 transition-colors
-              ${activeTab === tab
-                ? 'bg-card text-foreground border-border'
-                : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
-              }`}
-          >
+              ${activeTab === tab ? 'bg-card text-foreground border-border' : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'}`}>
             {tab}
           </button>
         ))}
       </div>
 
-      {/* Two column layout */}
       <div className="flex gap-3 min-h-[420px]">
-        {/* Left: Form */}
         <div className="w-[340px] shrink-0 bg-card border border-border rounded-lg p-4 flex flex-col">
           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Main Config</p>
           <div className="space-y-2.5">
             <div>
               <Label className="text-xs">User PPPoE</Label>
-              <Input className="h-8 text-xs mt-1" placeholder="username@isp" value={form.userPppoe} onChange={e => update('userPppoe', e.target.value)} />
+              <Input className="h-8 text-xs mt-1" placeholder="username@isp" value={form.userPppoe}
+                onChange={e => update('userPppoe', e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Serial Number</Label>
-                <Input className="h-8 text-xs mt-1" placeholder="ALCL..." value={form.serialNumber} onChange={e => update('serialNumber', e.target.value)} />
+                <Input className="h-8 text-xs mt-1" placeholder="ALCL..." value={form.serialNumber}
+                  onChange={e => update('serialNumber', e.target.value)} />
               </div>
               <div>
                 <Label className="text-xs">Mode</Label>
@@ -134,18 +240,14 @@ const SingleConfig: React.FC = () => {
                 <Label className="text-xs">Slot</Label>
                 <Select value={form.slot} onValueChange={v => update('slot', v)}>
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SLOTS.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{SLOTS.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-xs">Port</Label>
                 <Select value={form.port} onValueChange={v => update('port', v)}>
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SLOTS.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{SLOTS.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
@@ -158,7 +260,8 @@ const SingleConfig: React.FC = () => {
                 <Label className="text-xs">IP Static</Label>
                 <span className="text-[9px] font-bold bg-primary/15 text-primary px-1.5 py-0.5 rounded">AUTO</span>
               </div>
-              <Input className="h-8 text-xs mt-1" placeholder="Auto-assigned" value={form.ipStatic} onChange={e => update('ipStatic', e.target.value)} />
+              <Input className="h-8 text-xs mt-1" placeholder="Auto-assigned" value={form.ipStatic}
+                onChange={e => update('ipStatic', e.target.value)} />
             </div>
           </div>
 
@@ -169,9 +272,7 @@ const SingleConfig: React.FC = () => {
                 <Label className="text-xs">VLAN</Label>
                 <Select value={form.vlan} onValueChange={v => update('vlan', v)}>
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {VLANS.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{VLANS.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
@@ -184,18 +285,14 @@ const SingleConfig: React.FC = () => {
                 <Label className="text-xs">TCONT</Label>
                 <Select value={form.tcont} onValueChange={v => update('tcont', v)}>
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {TCONTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{TCONTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <Label className="text-xs">GEMPORT</Label>
                 <Select value={form.gemport} onValueChange={v => update('gemport', v)}>
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {GEMPORTS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{GEMPORTS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
@@ -206,7 +303,6 @@ const SingleConfig: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Terminal */}
         <div className="flex-1 bg-[hsl(240,20%,10%)] border border-border rounded-lg flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(0,0%,100%,0.06)]">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(0,0%,100%,0.5)]">Output</span>
