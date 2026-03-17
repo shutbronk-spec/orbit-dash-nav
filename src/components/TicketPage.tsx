@@ -41,8 +41,12 @@ function statusColor(s: string) {
   return 'bg-red-500/15 text-red-700 border-red-500/30';
 }
 
-const TicketPage: React.FC = () => {
-  const [subPage, setSubPage] = useState<SubPage>('create');
+interface TicketPageProps {
+  initialPage?: SubPage;
+}
+
+const TicketPage: React.FC<TicketPageProps> = ({ initialPage = 'create' }) => {
+  const [subPage, setSubPage] = useState<SubPage>(initialPage);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [gasUrl, setGasUrl] = useState('');
   const [gasUrlInput, setGasUrlInput] = useState('');
