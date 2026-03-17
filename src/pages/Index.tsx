@@ -8,6 +8,7 @@ import SingleConfig from '@/components/SingleConfig';
 import BatchConfig from '@/components/BatchConfig';
 import TicketPage from '@/components/TicketPage';
 import PnpExport from '@/components/PnpExport';
+import GuidePage from '@/components/GuidePage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
