@@ -70,7 +70,7 @@ const SubNavItem: React.FC<{ id: Route; icon: React.ElementType; label: string; 
 const Index: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<Route>('single-config');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [ticketExpanded, setTicketExpanded] = useState(false);
+  
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
