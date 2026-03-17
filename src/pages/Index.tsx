@@ -9,6 +9,8 @@ import BatchConfig from '@/components/BatchConfig';
 import TicketPage from '@/components/TicketPage';
 import PnpExport from '@/components/PnpExport';
 import GuidePage from '@/components/GuidePage';
+import LoginPage from '@/pages/LoginPage';
+import { getSession, clearSession } from '@/hooks/useSession';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
@@ -37,7 +39,7 @@ const ROUTE_META: Record<Route, { title: string; icon: React.ElementType; descri
 };
 
 // --- Nav Components ---
-const NavItem: React.FC<NavItemProps> = ({ id, icon: Icon, label, active, onClick, hasSubItems, isExpanded }) => (
+const NavItem: React.FC<NavItemProps> = ({ id, icon: Icon, label, active, onClick }) => (
   <button
     onClick={() => onClick(id)}
     className={`group flex items-center w-full px-4 py-2.5 my-0.5 text-sm font-medium transition-all duration-150
@@ -48,30 +50,26 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon: Icon, label, active, onClic
   >
     <Icon className={`w-4 h-4 mr-3 transition-colors ${active ? 'text-sidebar-active' : 'group-hover:text-primary-foreground'}`} />
     <span className="flex-1 text-left">{label}</span>
-    {hasSubItems && (
-      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-    )}
-  </button>
-);
-
-const SubNavItem: React.FC<{ id: Route; icon: React.ElementType; label: string; active: boolean; onClick: (id: Route) => void }> = 
-  ({ id, icon: Icon, label, active, onClick }) => (
-  <button
-    onClick={() => onClick(id)}
-    className={`flex items-center w-full pl-11 pr-4 py-2 text-xs font-medium transition-colors
-      ${active ? 'text-sidebar-active' : 'text-sidebar-muted hover:text-primary-foreground'}`}
-  >
-    <Icon className="w-3.5 h-3.5 mr-2.5" />
-    {label}
   </button>
 );
 
 // --- Main App ---
 const Index: React.FC = () => {
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [activeRoute, setActiveRoute] = useState<Route>('single-config');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  
   const [isMobile, setIsMobile] = useState(false);
+
+  // Session check on load + interval
+  useEffect(() => {
+    const checkSession = () => {
+      const session = getSession();
+      setAuthenticated(!!session);
+    };
+    checkSession();
+    const interval = setInterval(checkSession, 30000); // check every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const check = () => {
@@ -97,6 +95,23 @@ const Index: React.FC = () => {
     setActiveRoute(id);
     if (isMobile) setSidebarOpen(false);
   }, [isMobile]);
+
+  const handleLogout = useCallback(() => {
+    clearSession();
+    setAuthenticated(false);
+  }, []);
+
+  const handleLogin = useCallback(() => {
+    setAuthenticated(true);
+  }, []);
+
+  // Loading state
+  if (authenticated === null) return null;
+
+  // Show login
+  if (!authenticated) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   const meta = ROUTE_META[activeRoute];
   const PageIcon = meta.icon;
@@ -147,12 +162,17 @@ const Index: React.FC = () => {
 
         {/* Footer */}
         <div className="p-4 border-t border-sidebar-border bg-foreground/5">
-          <div className="flex items-center p-2 rounded-xl hover:bg-sidebar-hover transition-colors cursor-pointer group">
+          <div className="flex items-center p-2 rounded-xl hover:bg-sidebar-hover transition-colors cursor-pointer group"
+            onClick={handleLogout}
+            title="Logout"
+          >
             <div className="w-9 h-9 rounded-full bg-muted-foreground/30 flex items-center justify-center mr-3 border border-sidebar-border overflow-hidden">
               <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-primary-foreground truncate">Alex Rivera</p>
+              <p className="text-sm font-semibold text-primary-foreground truncate">
+                {getSession()?.username || 'User'}
+              </p>
               <p className="text-xs text-sidebar-muted truncate">Network Admin</p>
             </div>
             <LogOut className="w-4 h-4 text-sidebar-muted group-hover:text-destructive transition-colors" />
@@ -180,10 +200,15 @@ const Index: React.FC = () => {
               <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
             </button>
             <div className="h-8 w-px bg-border mx-1" />
-            <button className="flex items-center gap-2 pl-1 pr-2 py-1 hover:bg-muted rounded-full transition-colors">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 pl-1 pr-3 py-1 hover:bg-muted rounded-full transition-colors"
+              title="Logout"
+            >
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="w-4 h-4 text-primary" />
               </div>
+              <span className="hidden sm:inline text-xs font-medium text-muted-foreground">Logout</span>
             </button>
           </div>
         </header>
