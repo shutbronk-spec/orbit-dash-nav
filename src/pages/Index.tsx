@@ -204,8 +204,10 @@ const Index: React.FC = () => {
                 <SingleConfig />
               ) : activeRoute === 'batch-config' ? (
                 <BatchConfig />
-              ) : ['create-ticket', 'monitoring-crm'].includes(activeRoute) ? (
-                <TicketPage />
+              ) : activeRoute === 'create-ticket' ? (
+                <TicketPage initialPage="create" />
+              ) : activeRoute === 'monitoring-crm' ? (
+                <TicketPage initialPage="monitoring" />
               ) : (
                 <div className="bg-card rounded-2xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.05),0_10px_20px_-5px_rgba(0,0,0,0.04)] overflow-hidden">
                   <div className="p-8 md:p-12 flex flex-col items-center text-center">
