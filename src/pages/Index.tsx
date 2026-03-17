@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Settings, Layers, Ticket, Download, Wrench, BookOpen, 
+  Settings, Layers, Download, Wrench, BookOpen, 
   ChevronDown, PlusCircle, Activity, Menu, Bell, 
   ChevronRight, LogOut, User, Monitor 
 } from 'lucide-react';
