@@ -7,6 +7,7 @@ import {
 import SingleConfig from '@/components/SingleConfig';
 import BatchConfig from '@/components/BatchConfig';
 import TicketPage from '@/components/TicketPage';
+import PnpExport from '@/components/PnpExport';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
@@ -81,6 +82,15 @@ const Index: React.FC = () => {
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const route = (e as CustomEvent).detail as Route;
+      setActiveRoute(route);
+    };
+    window.addEventListener('navigate', handler);
+    return () => window.removeEventListener('navigate', handler);
   }, []);
 
   const handleNavClick = useCallback((id: Route) => {
@@ -208,6 +218,8 @@ const Index: React.FC = () => {
                 <TicketPage initialPage="create" />
               ) : activeRoute === 'monitoring-crm' ? (
                 <TicketPage initialPage="monitoring" />
+              ) : activeRoute === 'pnp-export' ? (
+                <PnpExport />
               ) : (
                 <div className="bg-card rounded-2xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.05),0_10px_20px_-5px_rgba(0,0,0,0.04)] overflow-hidden">
                   <div className="p-8 md:p-12 flex flex-col items-center text-center">
