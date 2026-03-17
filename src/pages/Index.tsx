@@ -29,8 +29,7 @@ const EASING: [number, number, number, number] = [0.4, 0, 0.2, 1];
 const ROUTE_META: Record<Route, { title: string; icon: React.ElementType; description: string }> = {
   'single-config': { title: 'Single Configuration', icon: Settings, description: 'Configure individual network parameters with precision and control.' },
   'batch-config': { title: 'Batch Configuration', icon: Layers, description: 'Manage bulk configuration changes across multiple devices simultaneously.' },
-  'ticket': { title: 'Ticket Management', icon: Ticket, description: 'Track and manage support tickets efficiently.' },
-  'create-ticket': { title: 'Create New Ticket', icon: PlusCircle, description: 'Submit a new support or configuration request ticket.' },
+  'create-ticket': { title: 'Create Ticket', icon: PlusCircle, description: 'Submit a new support or configuration request ticket.' },
   'monitoring-crm': { title: 'Monitoring CRM', icon: Activity, description: 'Real-time monitoring dashboard for customer relationship management.' },
   'pnp-export': { title: 'PnP Export Data', icon: Download, description: 'Export Plug and Play configuration data for deployment.' },
   'tools': { title: 'Utility Tools', icon: Wrench, description: 'Access diagnostic and utility tools for network management.' },
