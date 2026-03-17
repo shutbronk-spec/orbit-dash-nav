@@ -229,18 +229,6 @@ const TicketPage: React.FC<TicketPageProps> = ({ initialPage = 'create' }) => {
 
   return (
     <div className="space-y-4">
-      {/* Sub-page tabs */}
-      <div className="flex gap-1 bg-muted p-1 rounded-xl w-fit">
-        <button onClick={() => setSubPage('create')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${subPage === 'create' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
-          <PlusCircle className="w-4 h-4" /> Create Ticket
-        </button>
-        <button onClick={() => setSubPage('monitoring')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${subPage === 'monitoring' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground'}`}>
-          <Activity className="w-4 h-4" /> Monitoring CRM
-        </button>
-      </div>
-
       {subPage === 'create' ? (
         <div className="space-y-4">
           {/* GAS Config */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Settings, Layers, Ticket, Download, Wrench, BookOpen, 
+  Settings, Layers, Download, Wrench, BookOpen, 
   ChevronDown, PlusCircle, Activity, Menu, Bell, 
   ChevronRight, LogOut, User, Monitor 
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import GuidePage from '@/components/GuidePage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
-type Route = 'single-config' | 'batch-config' | 'ticket' | 'create-ticket' | 'monitoring-crm' | 'pnp-export' | 'tools' | 'guide';
+type Route = 'single-config' | 'batch-config' | 'create-ticket' | 'monitoring-crm' | 'pnp-export' | 'tools' | 'guide';
 
 interface NavItemProps {
   id: Route;
@@ -29,8 +29,7 @@ const EASING: [number, number, number, number] = [0.4, 0, 0.2, 1];
 const ROUTE_META: Record<Route, { title: string; icon: React.ElementType; description: string }> = {
   'single-config': { title: 'Single Configuration', icon: Settings, description: 'Configure individual network parameters with precision and control.' },
   'batch-config': { title: 'Batch Configuration', icon: Layers, description: 'Manage bulk configuration changes across multiple devices simultaneously.' },
-  'ticket': { title: 'Ticket Management', icon: Ticket, description: 'Track and manage support tickets efficiently.' },
-  'create-ticket': { title: 'Create New Ticket', icon: PlusCircle, description: 'Submit a new support or configuration request ticket.' },
+  'create-ticket': { title: 'Create Ticket', icon: PlusCircle, description: 'Submit a new support or configuration request ticket.' },
   'monitoring-crm': { title: 'Monitoring CRM', icon: Activity, description: 'Real-time monitoring dashboard for customer relationship management.' },
   'pnp-export': { title: 'PnP Export Data', icon: Download, description: 'Export Plug and Play configuration data for deployment.' },
   'tools': { title: 'Utility Tools', icon: Wrench, description: 'Access diagnostic and utility tools for network management.' },
@@ -71,7 +70,7 @@ const SubNavItem: React.FC<{ id: Route; icon: React.ElementType; label: string; 
 const Index: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<Route>('single-config');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [ticketExpanded, setTicketExpanded] = useState(false);
+  
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -95,12 +94,8 @@ const Index: React.FC = () => {
   }, []);
 
   const handleNavClick = useCallback((id: Route) => {
-    if (id === 'ticket') {
-      setTicketExpanded(prev => !prev);
-    } else {
-      setActiveRoute(id);
-      if (isMobile) setSidebarOpen(false);
-    }
+    setActiveRoute(id);
+    if (isMobile) setSidebarOpen(false);
   }, [isMobile]);
 
   const meta = ROUTE_META[activeRoute];
@@ -143,17 +138,8 @@ const Index: React.FC = () => {
         <nav className="flex-1 py-4 overflow-y-auto">
           <NavItem id="single-config" icon={Settings} label="Single Config" active={activeRoute === 'single-config'} onClick={handleNavClick} />
           <NavItem id="batch-config" icon={Layers} label="Batch Config" active={activeRoute === 'batch-config'} onClick={handleNavClick} />
-          <div>
-            <NavItem 
-              id="ticket" icon={Ticket} label="Ticket" 
-              active={['ticket', 'create-ticket', 'monitoring-crm'].includes(activeRoute)} 
-              onClick={handleNavClick} hasSubItems isExpanded={ticketExpanded} 
-            />
-            <div className={`overflow-hidden transition-all duration-[250ms] ease-in-out ${ticketExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <SubNavItem id="create-ticket" icon={PlusCircle} label="Create Ticket" active={activeRoute === 'create-ticket'} onClick={handleNavClick} />
-              <SubNavItem id="monitoring-crm" icon={Activity} label="Monitoring CRM" active={activeRoute === 'monitoring-crm'} onClick={handleNavClick} />
-            </div>
-          </div>
+          <NavItem id="create-ticket" icon={PlusCircle} label="Create Ticket" active={activeRoute === 'create-ticket'} onClick={handleNavClick} />
+          <NavItem id="monitoring-crm" icon={Activity} label="Monitoring CRM" active={activeRoute === 'monitoring-crm'} onClick={handleNavClick} />
           <NavItem id="pnp-export" icon={Download} label="PnP Export" active={activeRoute === 'pnp-export'} onClick={handleNavClick} />
           <NavItem id="tools" icon={Wrench} label="Tools" active={activeRoute === 'tools'} onClick={handleNavClick} />
           <NavItem id="guide" icon={BookOpen} label="Guide" active={activeRoute === 'guide'} onClick={handleNavClick} />
