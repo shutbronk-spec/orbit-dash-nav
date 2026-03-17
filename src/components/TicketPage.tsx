@@ -53,6 +53,8 @@ const TicketPage: React.FC<TicketPageProps> = ({ initialPage = 'create' }) => {
   const [configOpen, setConfigOpen] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  useEffect(() => { setSubPage(initialPage); }, [initialPage]);
+
   // Create form
   const [nama, setNama] = useState('');
   const [kontak, setKontak] = useState('');
