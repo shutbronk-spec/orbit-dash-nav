@@ -12,7 +12,7 @@ import GuidePage from '@/components/GuidePage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
-type Route = 'single-config' | 'batch-config' | 'ticket' | 'create-ticket' | 'monitoring-crm' | 'pnp-export' | 'tools' | 'guide';
+type Route = 'single-config' | 'batch-config' | 'create-ticket' | 'monitoring-crm' | 'pnp-export' | 'tools' | 'guide';
 
 interface NavItemProps {
   id: Route;
