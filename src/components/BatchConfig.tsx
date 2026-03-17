@@ -210,7 +210,6 @@ const BatchConfig: React.FC = () => {
 
       // Show success toast
       setTimeout(() => {
-        const { toast } = require('sonner');
         toast.success(`${count || exportData.length} config berhasil di-generate!`);
       }, 300);
     } catch {
