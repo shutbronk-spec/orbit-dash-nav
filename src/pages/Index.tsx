@@ -4,6 +4,7 @@ import {
   ChevronDown, PlusCircle, Activity, Menu, Bell, 
   ChevronRight, LogOut, User, Monitor 
 } from 'lucide-react';
+import SingleConfig from '@/components/SingleConfig';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
