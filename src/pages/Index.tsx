@@ -138,17 +138,8 @@ const Index: React.FC = () => {
         <nav className="flex-1 py-4 overflow-y-auto">
           <NavItem id="single-config" icon={Settings} label="Single Config" active={activeRoute === 'single-config'} onClick={handleNavClick} />
           <NavItem id="batch-config" icon={Layers} label="Batch Config" active={activeRoute === 'batch-config'} onClick={handleNavClick} />
-          <div>
-            <NavItem 
-              id="ticket" icon={Ticket} label="Ticket" 
-              active={['ticket', 'create-ticket', 'monitoring-crm'].includes(activeRoute)} 
-              onClick={handleNavClick} hasSubItems isExpanded={ticketExpanded} 
-            />
-            <div className={`overflow-hidden transition-all duration-[250ms] ease-in-out ${ticketExpanded ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <SubNavItem id="create-ticket" icon={PlusCircle} label="Create Ticket" active={activeRoute === 'create-ticket'} onClick={handleNavClick} />
-              <SubNavItem id="monitoring-crm" icon={Activity} label="Monitoring CRM" active={activeRoute === 'monitoring-crm'} onClick={handleNavClick} />
-            </div>
-          </div>
+          <NavItem id="create-ticket" icon={PlusCircle} label="Create Ticket" active={activeRoute === 'create-ticket'} onClick={handleNavClick} />
+          <NavItem id="monitoring-crm" icon={Activity} label="Monitoring CRM" active={activeRoute === 'monitoring-crm'} onClick={handleNavClick} />
           <NavItem id="pnp-export" icon={Download} label="PnP Export" active={activeRoute === 'pnp-export'} onClick={handleNavClick} />
           <NavItem id="tools" icon={Wrench} label="Tools" active={activeRoute === 'tools'} onClick={handleNavClick} />
           <NavItem id="guide" icon={BookOpen} label="Guide" active={activeRoute === 'guide'} onClick={handleNavClick} />
