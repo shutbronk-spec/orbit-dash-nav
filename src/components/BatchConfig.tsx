@@ -93,7 +93,11 @@ function calcIpStatic(idOrUsername: string): string {
     const num = parseInt(seg, 10);
     if (!isNaN(num) && /^\d+$/.test(seg)) {
       if (num >= 1 && num <= 250) return `10.250.0.${num}`;
-      if (num >= 251 && num <= 500) return `10.250.1.${num - 250}`;
+      if (num >= 251 && num <= 500) {
+        // Match original script.js: use parts[1] as last octet
+        const sub = parseInt(parts[i + 1], 10);
+        if (!isNaN(sub)) return `10.250.1.${sub}`;
+      }
     }
 
     // Kode huruf + angka (e.g. "AB76")

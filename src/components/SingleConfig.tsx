@@ -140,14 +140,32 @@ service pppoe gemport 1 vlan ${f.vlan}
 service hs gemport 1 vlan 200
 wan-ip 1 mode pppoe username ${f.userPppoe} password ${f.password} vlan-profile PPPOE${f.vlan} host 1`;
 
-  if (f.mode === 'pppoe-voucher') {
-    script += `\nwan-ip 3 mode pppoe username ${f.userPppoe}@voucher password ${f.password} vlan-profile PPPOE${f.vlan} host 1`;
+  if (f.mode === 'pppoe_hotspot') {
+    script += `\nservice-port 3 vport 2 user-vlan 2000 vlan 2000`;
   }
 
-  script += `\nwan-ip 2 mode static ip-profile static ip-address ${f.ipStatic || '10.250.0.1'} mask 255.255.0.0 vlan-profile STATIC200 host 2
-security-mgmt 1 state enable mode forward protocol web
-end
-wr`;
+  script += `\npppoe-intermediate-agent enable vport 1
+exit
+
+pon-onu-mng gpon-onu_${intf}:${pid}
+service pppoe gemport 1 vlan ${f.vlan}
+service hs gemport 1 vlan 200`;
+
+  if (f.mode === 'pppoe_hotspot') {
+    script += `\nservice hotspot gemport 2 vlan 2000`;
+  }
+
+  script += `\nwan-ip 1 mode pppoe username ${f.userPppoe} password ${f.password} vlan-profile PPPOE${f.vlan} host 1
+wan-ip 2 mode static ip-profile static ip-address ${f.ipStatic || '10.250.0.1'} mask 255.255.0.0 vlan-profile STATIC200 host 2
+security-mgmt 1 state enable mode forward protocol web`;
+
+  if (f.mode === 'pppoe_hotspot') {
+    script += `\nvlan port wifi_0/3 mode tag vlan 2000
+ssid auth wep wifi_0/3 open-system
+ssid ctrl wifi_0/3 name @KORNET-voucher`;
+  }
+
+  script += `\nend\nwr`;
 
   return script;
 };
