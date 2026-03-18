@@ -226,7 +226,7 @@ const SingleConfig: React.FC = () => {
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pppoe-only">PPPoE Only</SelectItem>
-                    <SelectItem value="pppoe-voucher">PPPoE + Voucher</SelectItem>
+                    <SelectItem value="pppoe_hotspot">PPPoE + Hotspot</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
