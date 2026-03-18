@@ -131,14 +131,7 @@ gemport 1 traffic-limit downstream ${f.gemport}
 gemport 2 tcont 2
 gemport 2 traffic-limit downstream ${f.gemport}
 service-port 1 vport 1 user-vlan ${f.vlan} vlan ${f.vlan}
-service-port 2 vport 1 user-vlan 200 vlan 200
-pppoe-intermediate-agent enable vport 1
-exit
-
-pon-onu-mng gpon-onu_${intf}:${pid}
-service pppoe gemport 1 vlan ${f.vlan}
-service hs gemport 1 vlan 200
-wan-ip 1 mode pppoe username ${f.userPppoe} password ${f.password} vlan-profile PPPOE${f.vlan} host 1`;
+service-port 2 vport 1 user-vlan 200 vlan 200`;
 
   if (f.mode === 'pppoe_hotspot') {
     script += `\nservice-port 3 vport 2 user-vlan 2000 vlan 2000`;
