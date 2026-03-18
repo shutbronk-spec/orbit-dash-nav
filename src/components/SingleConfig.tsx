@@ -131,23 +131,34 @@ gemport 1 traffic-limit downstream ${f.gemport}
 gemport 2 tcont 2
 gemport 2 traffic-limit downstream ${f.gemport}
 service-port 1 vport 1 user-vlan ${f.vlan} vlan ${f.vlan}
-service-port 2 vport 1 user-vlan 200 vlan 200
-pppoe-intermediate-agent enable vport 1
+service-port 2 vport 1 user-vlan 200 vlan 200`;
+
+  if (f.mode === 'pppoe_hotspot') {
+    script += `\nservice-port 3 vport 2 user-vlan 2000 vlan 2000`;
+  }
+
+  script += `\npppoe-intermediate-agent enable vport 1
 exit
 
 pon-onu-mng gpon-onu_${intf}:${pid}
 service pppoe gemport 1 vlan ${f.vlan}
-service hs gemport 1 vlan 200
-wan-ip 1 mode pppoe username ${f.userPppoe} password ${f.password} vlan-profile PPPOE${f.vlan} host 1`;
+service hs gemport 1 vlan 200`;
 
-  if (f.mode === 'pppoe-voucher') {
-    script += `\nwan-ip 3 mode pppoe username ${f.userPppoe}@voucher password ${f.password} vlan-profile PPPOE${f.vlan} host 1`;
+  if (f.mode === 'pppoe_hotspot') {
+    script += `\nservice hotspot gemport 2 vlan 2000`;
   }
 
-  script += `\nwan-ip 2 mode static ip-profile static ip-address ${f.ipStatic || '10.250.0.1'} mask 255.255.0.0 vlan-profile STATIC200 host 2
-security-mgmt 1 state enable mode forward protocol web
-end
-wr`;
+  script += `\nwan-ip 1 mode pppoe username ${f.userPppoe} password ${f.password} vlan-profile PPPOE${f.vlan} host 1
+wan-ip 2 mode static ip-profile static ip-address ${f.ipStatic || '10.250.0.1'} mask 255.255.0.0 vlan-profile STATIC200 host 2
+security-mgmt 1 state enable mode forward protocol web`;
+
+  if (f.mode === 'pppoe_hotspot') {
+    script += `\nvlan port wifi_0/3 mode tag vlan 2000
+ssid auth wep wifi_0/3 open-system
+ssid ctrl wifi_0/3 name @KORNET-voucher`;
+  }
+
+  script += `\nend\nwr`;
 
   return script;
 };
@@ -226,7 +237,7 @@ const SingleConfig: React.FC = () => {
                   <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pppoe-only">PPPoE Only</SelectItem>
-                    <SelectItem value="pppoe-voucher">PPPoE + Voucher</SelectItem>
+                    <SelectItem value="pppoe_hotspot">PPPoE + Hotspot</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
