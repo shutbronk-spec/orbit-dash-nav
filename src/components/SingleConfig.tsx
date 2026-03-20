@@ -65,7 +65,7 @@ function calcIpStatic(userPppoe: string, tab: Tab): string {
   for (let i = 0; i < parts.length; i++) {
     if (i === skipIdx) continue;
     const num = parseInt(parts[i], 10);
-    if (!isNaN(num) && String(num) === parts[i]) {
+    if (!isNaN(num) && /^\d+$/.test(parts[i])) {
       if (num >= 1 && num <= 250) {
         if (tab === 'TUNGGILIS') return `10.250.9.${num}`;
         if (tab === 'CIBATU') return `10.250.12.${num}`;
