@@ -118,7 +118,7 @@ function calcIpStatic(idOrUsername: string, tab: Tab): string {
   return '10.250.99.99';
 }
 
-function parseExcelRows(data: Record<string, unknown>[]): ParsedRow[] {
+function parseExcelRows(data: Record<string, unknown>[], tab: Tab): ParsedRow[] {
   const rows: ParsedRow[] = [];
   for (const row of data) {
     const username = String(row['Username'] || row['username'] || '').trim();
@@ -129,7 +129,7 @@ function parseExcelRows(data: Record<string, unknown>[]): ParsedRow[] {
     if (!username && !rawId) continue;
 
     const { rack, slot, port, ponId } = parseRackSlotPort(username);
-    const ip = calcIpStatic(id || username);
+    const ip = calcIpStatic(id || username, tab);
 
     rows.push({ username: username || id, id, sn: sn || 'ZTEG12345678', rack, slot, port, ponId, ip });
   }
