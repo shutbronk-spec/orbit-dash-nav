@@ -222,8 +222,11 @@ const SingleConfig: React.FC = () => {
           <div className="space-y-2.5">
             <div>
               <Label className="text-xs">User PPPoE</Label>
-              <Input className="h-8 text-xs mt-1" placeholder="username@isp" value={form.userPppoe}
+              <Input className={`h-8 text-xs mt-1 ${form.userPppoe.length > 30 ? 'border-destructive focus-visible:ring-destructive' : ''}`} placeholder="username@isp" value={form.userPppoe}
                 onChange={e => update('userPppoe', e.target.value)} />
+              {form.userPppoe.length > 30 && (
+                <p className="text-[10px] text-destructive mt-0.5">⚠ Username melebihi 30 karakter ({form.userPppoe.length}/30)</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
