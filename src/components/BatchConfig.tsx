@@ -80,27 +80,14 @@ function parseRackSlotPort(username: string): { rack: number; slot: number; port
   return { rack: 1, slot, port: portNum, ponId };
 }
 
-function calcIpStatic(idOrUsername: string): string {
+function calcIpStatic(idOrUsername: string, tab: Tab): string {
   const parts = idOrUsername.split('-');
-  // Skip segment at index (length - 2) when scanning
   const skipIdx = parts.length - 2;
 
+  // 1. Check CODE_MAP first (letter+number like "AB76")
   for (let i = 0; i < parts.length; i++) {
     if (i === skipIdx) continue;
     const seg = parts[i];
-
-    // Pure number
-    const num = parseInt(seg, 10);
-    if (!isNaN(num) && /^\d+$/.test(seg)) {
-      if (num >= 1 && num <= 250) return `10.250.0.${num}`;
-      if (num >= 251 && num <= 500) {
-        // Match original script.js: use parts[1] as last octet
-        const sub = parseInt(parts[i + 1], 10);
-        if (!isNaN(sub)) return `10.250.1.${sub}`;
-      }
-    }
-
-    // Kode huruf + angka (e.g. "AB76")
     const m = seg.match(/^([A-Za-z]+)(\d+)$/);
     if (m) {
       const code = m[1].toUpperCase();
@@ -110,10 +97,28 @@ function calcIpStatic(idOrUsername: string): string {
     }
   }
 
+  // 2. Then check pure numbers
+  for (let i = 0; i < parts.length; i++) {
+    if (i === skipIdx) continue;
+    const num = parseInt(parts[i], 10);
+    if (!isNaN(num) && /^\d+$/.test(parts[i])) {
+      if (num >= 1 && num <= 250) {
+        if (tab === 'TUNGGILIS') return `10.250.9.${num}`;
+        if (tab === 'CIBATU') return `10.250.12.${num}`;
+        return `10.250.0.${num}`;
+      }
+      if (num >= 251 && num <= 500) {
+        const sub = parseInt(parts[i + 1], 10);
+        if (!isNaN(sub)) return `10.250.1.${sub}`;
+        return `10.250.1.${num - 250}`;
+      }
+    }
+  }
+
   return '10.250.99.99';
 }
 
-function parseExcelRows(data: Record<string, unknown>[]): ParsedRow[] {
+function parseExcelRows(data: Record<string, unknown>[], tab: Tab): ParsedRow[] {
   const rows: ParsedRow[] = [];
   for (const row of data) {
     const username = String(row['Username'] || row['username'] || '').trim();
@@ -124,7 +129,7 @@ function parseExcelRows(data: Record<string, unknown>[]): ParsedRow[] {
     if (!username && !rawId) continue;
 
     const { rack, slot, port, ponId } = parseRackSlotPort(username);
-    const ip = calcIpStatic(id || username);
+    const ip = calcIpStatic(id || username, tab);
 
     rows.push({ username: username || id, id, sn: sn || 'ZTEG12345678', rack, slot, port, ponId, ip });
   }
@@ -198,7 +203,8 @@ const BatchConfig: React.FC = () => {
 
       // Parse rows using same logic
       const parsed = parseExcelRows(
-        exportData.map(d => ({ Username: d.Username, SN: d.SN }))
+        exportData.map(d => ({ Username: d.Username, SN: d.SN })),
+        preset
       );
       setRows(parsed);
 
@@ -239,7 +245,7 @@ const BatchConfig: React.FC = () => {
       const wb = XLSX.read(data, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[];
-      setRows(parseExcelRows(json));
+      setRows(parseExcelRows(json, activeTab));
     };
     reader.readAsArrayBuffer(file);
   };
