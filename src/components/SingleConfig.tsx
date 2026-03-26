@@ -312,6 +312,14 @@ const SingleConfig: React.FC = () => {
             </div>
           </div>
 
+          <div className="mt-auto pt-4 flex gap-2">
+            <Button className="flex-1 h-9 text-xs font-semibold" onClick={handleCopy}>
+              <Copy className="w-3.5 h-3.5 mr-1.5" />{copied ? 'Copied!' : 'Copy Script'}
+            </Button>
+            <Button variant="outline" className="h-9 text-xs font-semibold px-3" onClick={handleClear}>
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
 
         <div className="flex-1 bg-[hsl(240,20%,10%)] border border-border rounded-lg flex flex-col overflow-hidden">
