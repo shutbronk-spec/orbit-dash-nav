@@ -80,33 +80,38 @@ function parseRackSlotPort(username: string): { rack: number; slot: number; port
   return { rack: 1, slot, port: portNum, ponId };
 }
 
-function calcIpStatic(idOrUsername: string): string {
+function calcIpStatic(idOrUsername: string, tab: Tab): string {
   const parts = idOrUsername.split('-');
-  // Skip segment at index (length - 2) when scanning
   const skipIdx = parts.length - 2;
 
+  // 1. Check CODE_MAP first (letter+number like "AB76")
   for (let i = 0; i < parts.length; i++) {
     if (i === skipIdx) continue;
     const seg = parts[i];
-
-    // Pure number
-    const num = parseInt(seg, 10);
-    if (!isNaN(num) && /^\d+$/.test(seg)) {
-      if (num >= 1 && num <= 250) return `10.250.0.${num}`;
-      if (num >= 251 && num <= 500) {
-        // Match original script.js: use parts[1] as last octet
-        const sub = parseInt(parts[i + 1], 10);
-        if (!isNaN(sub)) return `10.250.1.${sub}`;
-      }
-    }
-
-    // Kode huruf + angka (e.g. "AB76")
     const m = seg.match(/^([A-Za-z]+)(\d+)$/);
     if (m) {
       const code = m[1].toUpperCase();
       const n = parseInt(m[2], 10);
       const mapped = CODE_MAP[code];
       if (mapped !== undefined) return `10.250.${mapped}.${n}`;
+    }
+  }
+
+  // 2. Then check pure numbers
+  for (let i = 0; i < parts.length; i++) {
+    if (i === skipIdx) continue;
+    const num = parseInt(parts[i], 10);
+    if (!isNaN(num) && /^\d+$/.test(parts[i])) {
+      if (num >= 1 && num <= 250) {
+        if (tab === 'TUNGGILIS') return `10.250.9.${num}`;
+        if (tab === 'CIBATU') return `10.250.12.${num}`;
+        return `10.250.0.${num}`;
+      }
+      if (num >= 251 && num <= 500) {
+        const sub = parseInt(parts[i + 1], 10);
+        if (!isNaN(sub)) return `10.250.1.${sub}`;
+        return `10.250.1.${num - 250}`;
+      }
     }
   }
 
