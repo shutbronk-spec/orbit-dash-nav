@@ -203,7 +203,8 @@ const BatchConfig: React.FC = () => {
 
       // Parse rows using same logic
       const parsed = parseExcelRows(
-        exportData.map(d => ({ Username: d.Username, SN: d.SN }))
+        exportData.map(d => ({ Username: d.Username, SN: d.SN })),
+        preset
       );
       setRows(parsed);
 
@@ -244,7 +245,7 @@ const BatchConfig: React.FC = () => {
       const wb = XLSX.read(data, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const json = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[];
-      setRows(parseExcelRows(json));
+      setRows(parseExcelRows(json, activeTab));
     };
     reader.readAsArrayBuffer(file);
   };
