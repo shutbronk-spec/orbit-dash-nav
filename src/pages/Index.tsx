@@ -59,6 +59,15 @@ const Index: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<Route>('single-config');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   // Session check on load + interval
   useEffect(() => {
@@ -195,6 +204,13 @@ const Index: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 hover:bg-muted rounded-full transition-colors"
+              title={darkMode ? 'Light Mode' : 'Dark Mode'}
+            >
+              {darkMode ? <Sun className="w-5 h-5 text-muted-foreground" /> : <Moon className="w-5 h-5 text-muted-foreground" />}
+            </button>
             <button className="relative p-2 hover:bg-muted rounded-full transition-colors">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full border-2 border-card"></span>
