@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Settings, Layers, Download, Wrench, BookOpen, 
   ChevronDown, PlusCircle, Activity, Menu, Bell, 
-  ChevronRight, LogOut, User, Monitor 
+  ChevronRight, LogOut, User, Monitor, Sun, Moon 
 } from 'lucide-react';
 import SingleConfig from '@/components/SingleConfig';
 import BatchConfig from '@/components/BatchConfig';
