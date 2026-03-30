@@ -67,13 +67,14 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     return () => clearTimeout(timerRef.current);
   }, []);
 
-  // Spark particles data
-  const sparks = useRef(
-    Array.from({ length: 18 }, (_, i) => ({
-      delay: Math.random() * 3,
-      x: 15 + Math.random() * 70,
-      y: 10 + Math.random() * 80,
-      size: 2 + Math.random() * 4,
+  // Mini lightning bolts data
+  const minibolts = useRef(
+    Array.from({ length: 12 }, () => ({
+      delay: Math.random() * 4,
+      x: 5 + Math.random() * 90,
+      y: 5 + Math.random() * 90,
+      rotation: -40 + Math.random() * 80,
+      size: 8 + Math.random() * 16,
     }))
   ).current;
 
