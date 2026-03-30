@@ -198,9 +198,9 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </motion.div>
       ))}
 
-      {/* Spark particles */}
-      {sparks.map((s, i) => (
-        <Spark key={i} {...s} />
+      {/* Mini lightning bolts */}
+      {minibolts.map((b, i) => (
+        <MiniBolt key={i} {...b} />
       ))}
 
       {/* Main content */}
