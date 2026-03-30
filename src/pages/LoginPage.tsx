@@ -287,12 +287,12 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Zap className="w-8 h-8" style={{ color: 'hsl(45 100% 55%)' }} />
                   <h1 className="text-3xl font-black tracking-tight" style={{ color: 'hsl(45 100% 70%)' }}>
-                    OLT Config Pro
+                    Nezuko-chaaan!
                   </h1>
                 </div>
               </motion.div>
               <p className="text-sm font-medium" style={{ color: 'hsl(220 15% 55%)' }}>
-                Sistem Konfigurasi Jaringan
+                ⚡ Thunder Breathing, First Form ⚡
               </p>
             </div>
 
