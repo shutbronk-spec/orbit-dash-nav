@@ -13,31 +13,19 @@ const LightningBolt: React.FC<{ className?: string; style?: React.CSSProperties 
   </svg>
 );
 
-// Spark particle
-const Spark: React.FC<{ delay: number; x: number; y: number; size: number }> = ({ delay, x, y, size }) => (
+// Mini lightning bolt effect
+const MiniBolt: React.FC<{ delay: number; x: number; y: number; rotation: number; size: number }> = ({ delay, x, y, rotation, size }) => (
   <motion.div
-    className="absolute rounded-full"
-    style={{
-      left: `${x}%`,
-      top: `${y}%`,
-      width: size,
-      height: size,
-      background: 'radial-gradient(circle, hsl(45 100% 60%), hsl(45 100% 40%) 60%, transparent 100%)',
-      boxShadow: '0 0 6px 2px hsl(45 100% 50% / 0.6)',
-    }}
-    animate={{
-      opacity: [0, 1, 0.6, 1, 0],
-      scale: [0.5, 1.2, 0.8, 1, 0.3],
-      y: [0, -20, -10, -30, -50],
-      x: [0, 5, -5, 8, -3],
-    }}
-    transition={{
-      duration: 2 + Math.random() * 2,
-      delay,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    }}
-  />
+    className="absolute pointer-events-none"
+    style={{ left: `${x}%`, top: `${y}%`, transform: `rotate(${rotation}deg)` }}
+    animate={{ opacity: [0, 1, 0.3, 0.9, 0], scaleY: [0.3, 1, 0.6, 1, 0] }}
+    transition={{ duration: 0.6, delay, repeat: Infinity, repeatDelay: 2 + Math.random() * 3 }}
+  >
+    <LightningBolt
+      className="drop-shadow-[0_0_8px_hsl(45,100%,60%)]"
+      style={{ color: 'hsl(45 100% 65%)', width: size, height: size * 2.5 }}
+    />
+  </motion.div>
 );
 
 const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
@@ -79,13 +67,14 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     return () => clearTimeout(timerRef.current);
   }, []);
 
-  // Spark particles data
-  const sparks = useRef(
-    Array.from({ length: 18 }, (_, i) => ({
-      delay: Math.random() * 3,
-      x: 15 + Math.random() * 70,
-      y: 10 + Math.random() * 80,
-      size: 2 + Math.random() * 4,
+  // Mini lightning bolts data
+  const minibolts = useRef(
+    Array.from({ length: 12 }, () => ({
+      delay: Math.random() * 4,
+      x: 5 + Math.random() * 90,
+      y: 5 + Math.random() * 90,
+      rotation: -40 + Math.random() * 80,
+      size: 8 + Math.random() * 16,
     }))
   ).current;
 
@@ -209,9 +198,9 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         </motion.div>
       ))}
 
-      {/* Spark particles */}
-      {sparks.map((s, i) => (
-        <Spark key={i} {...s} />
+      {/* Mini lightning bolts */}
+      {minibolts.map((b, i) => (
+        <MiniBolt key={i} {...b} />
       ))}
 
       {/* Main content */}
