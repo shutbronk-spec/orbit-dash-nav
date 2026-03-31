@@ -161,12 +161,20 @@ const Index: React.FC = () => {
           md:relative md:translate-x-0 ${!sidebarOpen ? 'md:-translate-x-full md:hidden' : ''}`}
       >
         {/* Header */}
-        <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mr-3 shadow-lg shadow-primary/20">
+        <div className="h-16 flex items-center px-6 border-b border-sidebar-border relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'linear-gradient(135deg, hsl(200 80% 50% / 0.06) 0%, transparent 60%)',
+          }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mr-3 shadow-lg relative"
+            style={{
+              background: 'linear-gradient(135deg, hsl(200 80% 50%), hsl(217 91% 55%))',
+              boxShadow: '0 0 12px hsl(200 80% 50% / 0.3)',
+            }}
+          >
             <Monitor className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-primary-foreground">
-            NetConfig <span className="text-sidebar-active">Pro</span>
+          <span className="text-lg font-bold tracking-tight text-primary-foreground relative z-10">
+            いしに<span className="text-sidebar-active" style={{ textShadow: '0 0 8px hsl(200 80% 50% / 0.4)' }}>たたかう</span>
           </span>
         </div>
 
