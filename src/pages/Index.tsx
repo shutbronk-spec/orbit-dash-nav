@@ -42,14 +42,26 @@ const ROUTE_META: Record<Route, { title: string; icon: React.ElementType; descri
 const NavItem: React.FC<NavItemProps> = ({ id, icon: Icon, label, active, onClick }) => (
   <button
     onClick={() => onClick(id)}
-    className={`group flex items-center w-full px-4 py-2.5 my-0.5 text-sm font-medium transition-all duration-150
+    className={`group relative flex items-center w-full px-4 py-2.5 my-0.5 text-sm font-medium transition-all duration-200 overflow-hidden
       ${active 
-        ? 'bg-sidebar-active/10 text-sidebar-active border-l-[3px] border-sidebar-active' 
+        ? 'bg-sidebar-active/15 text-sidebar-active border-l-[3px] border-sidebar-active' 
         : 'text-sidebar-foreground hover:bg-sidebar-hover hover:text-primary-foreground border-l-[3px] border-transparent'
       }`}
+    style={{ position: 'relative' }}
   >
-    <Icon className={`w-4 h-4 mr-3 transition-colors ${active ? 'text-sidebar-active' : 'group-hover:text-primary-foreground'}`} />
-    <span className="flex-1 text-left">{label}</span>
+    {/* Shiny sweep on hover */}
+    <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
+      style={{
+        background: 'linear-gradient(90deg, transparent, hsl(200 80% 60% / 0.12), transparent)',
+      }}
+    />
+    {active && (
+      <span className="absolute inset-0 pointer-events-none" style={{
+        background: 'linear-gradient(90deg, hsl(200 80% 50% / 0.08), transparent)',
+      }} />
+    )}
+    <Icon className={`w-4 h-4 mr-3 transition-all duration-200 ${active ? 'text-sidebar-active drop-shadow-[0_0_4px_hsl(200_80%_60%/0.5)]' : 'group-hover:text-primary-foreground group-hover:drop-shadow-[0_0_3px_hsl(200_80%_60%/0.3)]'}`} />
+    <span className="flex-1 text-left relative z-10">{label}</span>
   </button>
 );
 
