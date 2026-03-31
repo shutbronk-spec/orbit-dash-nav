@@ -48,14 +48,52 @@ const WaterDrop: React.FC<{ delay: number; x: number; duration: number }> = ({ d
   </motion.div>
 );
 
-// Water wave SVG
-const WaterWave: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className, style }) => (
-  <svg viewBox="0 0 1200 120" className={className} style={style} preserveAspectRatio="none">
-    <path
-      d="M0,60 C200,100 400,20 600,60 C800,100 1000,20 1200,60 L1200,120 L0,120 Z"
-      fill="currentColor"
-    />
+// Layered ocean wave SVGs
+const WaveLayer1: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 1440 320" className={className} preserveAspectRatio="none">
+    <path fill="hsl(200 70% 25% / 0.4)"
+      d="M0,224L48,213.3C96,203,192,181,288,186.7C384,192,480,224,576,234.7C672,245,768,235,864,208C960,181,1056,139,1152,133.3C1248,128,1344,160,1392,176L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
   </svg>
+);
+const WaveLayer2: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 1440 320" className={className} preserveAspectRatio="none">
+    <path fill="hsl(205 60% 20% / 0.5)"
+      d="M0,288L48,272C96,256,192,224,288,213.3C384,203,480,213,576,229.3C672,245,768,267,864,261.3C960,256,1056,224,1152,208C1248,192,1344,192,1392,192L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+  </svg>
+);
+const WaveLayer3: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 1440 320" className={className} preserveAspectRatio="none">
+    <path fill="hsl(210 50% 15% / 0.6)"
+      d="M0,256L48,261.3C96,267,192,277,288,272C384,267,480,245,576,240C672,235,768,245,864,250.7C960,256,1056,256,1152,245.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+  </svg>
+);
+
+// Foam/spray particle
+const FoamParticle: React.FC<{ delay: number; x: number; size: number }> = ({ delay, x, size }) => (
+  <motion.div
+    className="absolute pointer-events-none rounded-full"
+    style={{
+      left: `${x}%`,
+      bottom: '8%',
+      width: size,
+      height: size,
+      background: 'radial-gradient(circle, hsl(200 60% 85% / 0.5), transparent)',
+      filter: 'blur(1px)',
+    }}
+    animate={{
+      y: [0, -30 - Math.random() * 40, -10],
+      x: [-10, 10 + Math.random() * 20, -5],
+      opacity: [0, 0.7, 0],
+      scale: [0.5, 1.2, 0.3],
+    }}
+    transition={{
+      duration: 2 + Math.random() * 1.5,
+      delay,
+      repeat: Infinity,
+      repeatDelay: 2 + Math.random() * 3,
+      ease: 'easeOut',
+    }}
+  />
 );
 
 const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
