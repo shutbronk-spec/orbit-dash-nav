@@ -48,14 +48,52 @@ const WaterDrop: React.FC<{ delay: number; x: number; duration: number }> = ({ d
   </motion.div>
 );
 
-// Water wave SVG
-const WaterWave: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className, style }) => (
-  <svg viewBox="0 0 1200 120" className={className} style={style} preserveAspectRatio="none">
-    <path
-      d="M0,60 C200,100 400,20 600,60 C800,100 1000,20 1200,60 L1200,120 L0,120 Z"
-      fill="currentColor"
-    />
+// Layered ocean wave SVGs
+const WaveLayer1: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 1440 320" className={className} preserveAspectRatio="none">
+    <path fill="hsl(200 70% 25% / 0.4)"
+      d="M0,224L48,213.3C96,203,192,181,288,186.7C384,192,480,224,576,234.7C672,245,768,235,864,208C960,181,1056,139,1152,133.3C1248,128,1344,160,1392,176L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
   </svg>
+);
+const WaveLayer2: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 1440 320" className={className} preserveAspectRatio="none">
+    <path fill="hsl(205 60% 20% / 0.5)"
+      d="M0,288L48,272C96,256,192,224,288,213.3C384,203,480,213,576,229.3C672,245,768,267,864,261.3C960,256,1056,224,1152,208C1248,192,1344,192,1392,192L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+  </svg>
+);
+const WaveLayer3: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 1440 320" className={className} preserveAspectRatio="none">
+    <path fill="hsl(210 50% 15% / 0.6)"
+      d="M0,256L48,261.3C96,267,192,277,288,272C384,267,480,245,576,240C672,235,768,245,864,250.7C960,256,1056,256,1152,245.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+  </svg>
+);
+
+// Foam/spray particle
+const FoamParticle: React.FC<{ delay: number; x: number; size: number }> = ({ delay, x, size }) => (
+  <motion.div
+    className="absolute pointer-events-none rounded-full"
+    style={{
+      left: `${x}%`,
+      bottom: '8%',
+      width: size,
+      height: size,
+      background: 'radial-gradient(circle, hsl(200 60% 85% / 0.5), transparent)',
+      filter: 'blur(1px)',
+    }}
+    animate={{
+      y: [0, -30 - Math.random() * 40, -10],
+      x: [-10, 10 + Math.random() * 20, -5],
+      opacity: [0, 0.7, 0],
+      scale: [0.5, 1.2, 0.3],
+    }}
+    transition={{
+      duration: 2 + Math.random() * 1.5,
+      delay,
+      repeat: Infinity,
+      repeatDelay: 2 + Math.random() * 3,
+      ease: 'easeOut',
+    }}
+  />
 );
 
 const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
@@ -77,6 +115,15 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       x: 5 + Math.random() * 90,
       y: 60 + Math.random() * 35,
       size: 20 + Math.random() * 40,
+    }))
+  ).current;
+
+  // Foam particles data
+  const foamParticles = useRef(
+    Array.from({ length: 10 }, () => ({
+      delay: Math.random() * 5,
+      x: 5 + Math.random() * 90,
+      size: 4 + Math.random() * 10,
     }))
   ).current;
 
@@ -132,38 +179,45 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex items-center justify-center"
-      style={{ background: 'linear-gradient(135deg, hsl(210 40% 8%), hsl(220 50% 12%), hsl(200 30% 6%))' }}>
+      style={{ background: 'linear-gradient(180deg, hsl(210 40% 8%) 0%, hsl(205 50% 10%) 40%, hsl(200 45% 14%) 70%, hsl(200 40% 18%) 100%)' }}>
 
       {/* Deep ocean overlay */}
       <div className="absolute inset-0 opacity-40"
         style={{
-          background: 'radial-gradient(ellipse at 50% 100%, hsl(200 60% 20% / 0.5) 0%, transparent 60%), radial-gradient(ellipse at 20% 30%, hsl(210 50% 15% / 0.4) 0%, transparent 50%)',
+          background: 'radial-gradient(ellipse at 50% 100%, hsl(200 60% 25% / 0.6) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, hsl(210 50% 15% / 0.4) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, hsl(195 60% 20% / 0.3) 0%, transparent 40%)',
         }}
       />
 
-      {/* Animated water waves at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+      {/* Layered ocean waves at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[5]">
         <motion.div
-          animate={{ x: [0, -50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ x: [0, -60, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <WaterWave
-            className="w-[200%] h-20 opacity-10"
-            style={{ color: 'hsl(200 80% 50%)' }}
-          />
+          <WaveLayer1 className="w-[200%] h-40" />
         </motion.div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[6]">
         <motion.div
-          animate={{ x: [0, 30, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          animate={{ x: [0, 40, 0] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
         >
-          <WaterWave
-            className="w-[200%] h-16 opacity-[0.07]"
-            style={{ color: 'hsl(210 70% 60%)' }}
-          />
+          <WaveLayer2 className="w-[200%] h-32" />
         </motion.div>
       </div>
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[7]">
+        <motion.div
+          animate={{ x: [0, -30, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        >
+          <WaveLayer3 className="w-[200%] h-24" />
+        </motion.div>
+      </div>
+
+      {/* Foam spray particles */}
+      {foamParticles.map((f, i) => (
+        <FoamParticle key={i} {...f} />
+      ))}
 
       {/* Water splash flash */}
       <AnimatePresence>
