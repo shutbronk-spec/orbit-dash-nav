@@ -189,22 +189,34 @@ const Index: React.FC = () => {
           <NavItem id="guide" icon={BookOpen} label="Guide" active={activeRoute === 'guide'} onClick={handleNavClick} />
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-sidebar-border bg-foreground/5">
-          <div className="flex items-center p-2 rounded-xl hover:bg-sidebar-hover transition-colors cursor-pointer group"
+        {/* Footer - Profile */}
+        <div className="p-4 border-t border-sidebar-border relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'linear-gradient(0deg, hsl(200 80% 50% / 0.04), transparent)',
+          }} />
+          <div className="flex items-center p-2 rounded-xl hover:bg-sidebar-hover transition-all duration-300 cursor-pointer group relative overflow-hidden"
             onClick={handleLogout}
             title="Logout"
           >
-            <div className="w-9 h-9 rounded-full bg-muted-foreground/30 flex items-center justify-center mr-3 border border-sidebar-border overflow-hidden">
+            {/* Shiny sweep on profile hover */}
+            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
+              style={{ background: 'linear-gradient(90deg, transparent, hsl(200 80% 60% / 0.1), transparent)' }}
+            />
+            <div className="w-9 h-9 rounded-full flex items-center justify-center mr-3 border overflow-hidden relative"
+              style={{
+                borderColor: 'hsl(200 80% 50% / 0.3)',
+                boxShadow: '0 0 8px hsl(200 80% 50% / 0.15)',
+              }}
+            >
               <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 relative z-10">
               <p className="text-sm font-semibold text-primary-foreground truncate">
                 {getSession()?.username || 'User'}
               </p>
-              <p className="text-xs text-sidebar-muted truncate">Network Admin</p>
+              <p className="text-xs truncate" style={{ color: 'hsl(200 80% 50% / 0.6)' }}>鬼殺隊 • Demon Slayer</p>
             </div>
-            <LogOut className="w-4 h-4 text-sidebar-muted group-hover:text-destructive transition-colors" />
+            <LogOut className="w-4 h-4 text-sidebar-muted group-hover:text-destructive transition-colors relative z-10" />
           </div>
         </div>
       </aside>
