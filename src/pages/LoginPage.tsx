@@ -312,7 +312,6 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               src={tanjiroImg}
               alt="Tanjiro Kamado"
               className="h-[480px] w-auto drop-shadow-[0_0_30px_hsl(200,80%,50%,0.4)] select-none"
-              style={{ mixBlendMode: 'screen' }}
               draggable={false}
             />
             {/* Water aura around character */}
