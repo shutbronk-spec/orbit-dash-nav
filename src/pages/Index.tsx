@@ -42,14 +42,26 @@ const ROUTE_META: Record<Route, { title: string; icon: React.ElementType; descri
 const NavItem: React.FC<NavItemProps> = ({ id, icon: Icon, label, active, onClick }) => (
   <button
     onClick={() => onClick(id)}
-    className={`group flex items-center w-full px-4 py-2.5 my-0.5 text-sm font-medium transition-all duration-150
+    className={`group relative flex items-center w-full px-4 py-2.5 my-0.5 text-sm font-medium transition-all duration-200 overflow-hidden
       ${active 
-        ? 'bg-sidebar-active/10 text-sidebar-active border-l-[3px] border-sidebar-active' 
+        ? 'bg-sidebar-active/15 text-sidebar-active border-l-[3px] border-sidebar-active' 
         : 'text-sidebar-foreground hover:bg-sidebar-hover hover:text-primary-foreground border-l-[3px] border-transparent'
       }`}
+    style={{ position: 'relative' }}
   >
-    <Icon className={`w-4 h-4 mr-3 transition-colors ${active ? 'text-sidebar-active' : 'group-hover:text-primary-foreground'}`} />
-    <span className="flex-1 text-left">{label}</span>
+    {/* Shiny sweep on hover */}
+    <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
+      style={{
+        background: 'linear-gradient(90deg, transparent, hsl(200 80% 60% / 0.12), transparent)',
+      }}
+    />
+    {active && (
+      <span className="absolute inset-0 pointer-events-none" style={{
+        background: 'linear-gradient(90deg, hsl(200 80% 50% / 0.08), transparent)',
+      }} />
+    )}
+    <Icon className={`w-4 h-4 mr-3 transition-all duration-200 ${active ? 'text-sidebar-active drop-shadow-[0_0_4px_hsl(200_80%_60%/0.5)]' : 'group-hover:text-primary-foreground group-hover:drop-shadow-[0_0_3px_hsl(200_80%_60%/0.3)]'}`} />
+    <span className="flex-1 text-left relative z-10">{label}</span>
   </button>
 );
 
@@ -149,12 +161,20 @@ const Index: React.FC = () => {
           md:relative md:translate-x-0 ${!sidebarOpen ? 'md:-translate-x-full md:hidden' : ''}`}
       >
         {/* Header */}
-        <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mr-3 shadow-lg shadow-primary/20">
+        <div className="h-16 flex items-center px-6 border-b border-sidebar-border relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'linear-gradient(135deg, hsl(200 80% 50% / 0.06) 0%, transparent 60%)',
+          }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center mr-3 shadow-lg relative"
+            style={{
+              background: 'linear-gradient(135deg, hsl(200 80% 50%), hsl(217 91% 55%))',
+              boxShadow: '0 0 12px hsl(200 80% 50% / 0.3)',
+            }}
+          >
             <Monitor className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-primary-foreground">
-            NetConfig <span className="text-sidebar-active">Pro</span>
+          <span className="text-lg font-bold tracking-tight text-primary-foreground relative z-10">
+            いしに<span className="text-sidebar-active" style={{ textShadow: '0 0 8px hsl(200 80% 50% / 0.4)' }}>たたかう</span>
           </span>
         </div>
 
@@ -169,22 +189,34 @@ const Index: React.FC = () => {
           <NavItem id="guide" icon={BookOpen} label="Guide" active={activeRoute === 'guide'} onClick={handleNavClick} />
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-sidebar-border bg-foreground/5">
-          <div className="flex items-center p-2 rounded-xl hover:bg-sidebar-hover transition-colors cursor-pointer group"
+        {/* Footer - Profile */}
+        <div className="p-4 border-t border-sidebar-border relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'linear-gradient(0deg, hsl(200 80% 50% / 0.04), transparent)',
+          }} />
+          <div className="flex items-center p-2 rounded-xl hover:bg-sidebar-hover transition-all duration-300 cursor-pointer group relative overflow-hidden"
             onClick={handleLogout}
             title="Logout"
           >
-            <div className="w-9 h-9 rounded-full bg-muted-foreground/30 flex items-center justify-center mr-3 border border-sidebar-border overflow-hidden">
+            {/* Shiny sweep on profile hover */}
+            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
+              style={{ background: 'linear-gradient(90deg, transparent, hsl(200 80% 60% / 0.1), transparent)' }}
+            />
+            <div className="w-9 h-9 rounded-full flex items-center justify-center mr-3 border overflow-hidden relative"
+              style={{
+                borderColor: 'hsl(200 80% 50% / 0.3)',
+                boxShadow: '0 0 8px hsl(200 80% 50% / 0.15)',
+              }}
+            >
               <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 relative z-10">
               <p className="text-sm font-semibold text-primary-foreground truncate">
                 {getSession()?.username || 'User'}
               </p>
-              <p className="text-xs text-sidebar-muted truncate">Network Admin</p>
+              <p className="text-xs truncate" style={{ color: 'hsl(200 80% 50% / 0.6)' }}>鬼殺隊 • Demon Slayer</p>
             </div>
-            <LogOut className="w-4 h-4 text-sidebar-muted group-hover:text-destructive transition-colors" />
+            <LogOut className="w-4 h-4 text-sidebar-muted group-hover:text-destructive transition-colors relative z-10" />
           </div>
         </div>
       </aside>
