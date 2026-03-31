@@ -312,7 +312,6 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               src={tanjiroImg}
               alt="Tanjiro Kamado"
               className="h-[480px] w-auto drop-shadow-[0_0_30px_hsl(200,80%,50%,0.4)] select-none"
-              style={{ mixBlendMode: 'screen' }}
               draggable={false}
             />
             {/* Water aura around character */}
@@ -382,7 +381,6 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 src={tanjiroImg}
                 alt="Tanjiro"
                 className="h-32 w-auto opacity-70 drop-shadow-[0_0_20px_hsl(200,80%,50%,0.3)]"
-                style={{ mixBlendMode: 'screen' }}
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                 draggable={false}
