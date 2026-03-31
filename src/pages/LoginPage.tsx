@@ -366,7 +366,7 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Droplets className="w-8 h-8" style={{ color: 'hsl(200 80% 60%)' }} />
                   <h1 className="text-3xl font-black tracking-tight" style={{ color: 'hsl(200 80% 70%)' }}>
-                    Nezuko-chaaan!
+                    いしにたたかう
                   </h1>
                 </div>
               </motion.div>
