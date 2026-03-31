@@ -118,6 +118,15 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     }))
   ).current;
 
+  // Foam particles data
+  const foamParticles = useRef(
+    Array.from({ length: 10 }, () => ({
+      delay: Math.random() * 5,
+      x: 5 + Math.random() * 90,
+      size: 4 + Math.random() * 10,
+    }))
+  ).current;
+
   // Water drops data
   const drops = useRef(
     Array.from({ length: 15 }, () => ({
@@ -170,38 +179,45 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex items-center justify-center"
-      style={{ background: 'linear-gradient(135deg, hsl(210 40% 8%), hsl(220 50% 12%), hsl(200 30% 6%))' }}>
+      style={{ background: 'linear-gradient(180deg, hsl(210 40% 8%) 0%, hsl(205 50% 10%) 40%, hsl(200 45% 14%) 70%, hsl(200 40% 18%) 100%)' }}>
 
       {/* Deep ocean overlay */}
       <div className="absolute inset-0 opacity-40"
         style={{
-          background: 'radial-gradient(ellipse at 50% 100%, hsl(200 60% 20% / 0.5) 0%, transparent 60%), radial-gradient(ellipse at 20% 30%, hsl(210 50% 15% / 0.4) 0%, transparent 50%)',
+          background: 'radial-gradient(ellipse at 50% 100%, hsl(200 60% 25% / 0.6) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, hsl(210 50% 15% / 0.4) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, hsl(195 60% 20% / 0.3) 0%, transparent 40%)',
         }}
       />
 
-      {/* Animated water waves at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+      {/* Layered ocean waves at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[5]">
         <motion.div
-          animate={{ x: [0, -50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ x: [0, -60, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <WaterWave
-            className="w-[200%] h-20 opacity-10"
-            style={{ color: 'hsl(200 80% 50%)' }}
-          />
+          <WaveLayer1 className="w-[200%] h-40" />
         </motion.div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[6]">
         <motion.div
-          animate={{ x: [0, 30, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          animate={{ x: [0, 40, 0] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
         >
-          <WaterWave
-            className="w-[200%] h-16 opacity-[0.07]"
-            style={{ color: 'hsl(210 70% 60%)' }}
-          />
+          <WaveLayer2 className="w-[200%] h-32" />
         </motion.div>
       </div>
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none z-[7]">
+        <motion.div
+          animate={{ x: [0, -30, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        >
+          <WaveLayer3 className="w-[200%] h-24" />
+        </motion.div>
+      </div>
+
+      {/* Foam spray particles */}
+      {foamParticles.map((f, i) => (
+        <FoamParticle key={i} {...f} />
+      ))}
 
       {/* Water splash flash */}
       <AnimatePresence>
