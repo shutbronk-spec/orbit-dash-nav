@@ -1,31 +1,61 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Eye, EyeOff, Zap } from 'lucide-react';
+import { Eye, EyeOff, Droplets } from 'lucide-react';
 import { createSession } from '@/hooks/useSession';
 import { motion, AnimatePresence } from 'framer-motion';
-import zenitsuImg from '@/assets/zenitsu.png';
+import tanjiroImg from '@/assets/tanjiro.png';
 
 const CREDENTIALS = { username: 'kudil', password: 'sagararizki' };
 
-// Lightning bolt SVG path
-const LightningBolt: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className, style }) => (
-  <svg viewBox="0 0 100 200" className={className} style={style} fill="currentColor">
-    <polygon points="45,0 25,80 50,80 20,200 80,70 55,70 75,0" />
-  </svg>
+// Water ripple component
+const WaterRipple: React.FC<{ delay: number; x: number; y: number; size: number }> = ({ delay, x, y, size }) => (
+  <motion.div
+    className="absolute pointer-events-none rounded-full"
+    style={{
+      left: `${x}%`,
+      top: `${y}%`,
+      width: size,
+      height: size,
+      border: '2px solid hsl(200 80% 60% / 0.4)',
+    }}
+    animate={{
+      scale: [0, 2.5, 4],
+      opacity: [0.6, 0.3, 0],
+    }}
+    transition={{
+      duration: 3,
+      delay,
+      repeat: Infinity,
+      repeatDelay: 1 + Math.random() * 3,
+      ease: 'easeOut',
+    }}
+  />
 );
 
-// Mini lightning bolt effect
-const MiniBolt: React.FC<{ delay: number; x: number; y: number; rotation: number; size: number }> = ({ delay, x, y, rotation, size }) => (
+// Water drop falling
+const WaterDrop: React.FC<{ delay: number; x: number; duration: number }> = ({ delay, x, duration }) => (
   <motion.div
     className="absolute pointer-events-none"
-    style={{ left: `${x}%`, top: `${y}%`, transform: `rotate(${rotation}deg)` }}
-    animate={{ opacity: [0, 1, 0.3, 0.9, 0], scaleY: [0.3, 1, 0.6, 1, 0] }}
-    transition={{ duration: 0.6, delay, repeat: Infinity, repeatDelay: 2 + Math.random() * 3 }}
+    style={{ left: `${x}%`, top: '-5%' }}
+    animate={{ y: ['0vh', '110vh'] }}
+    transition={{ duration, delay, repeat: Infinity, ease: 'linear' }}
   >
-    <LightningBolt
-      className="drop-shadow-[0_0_8px_hsl(45,100%,60%)]"
-      style={{ color: 'hsl(45 100% 65%)', width: size, height: size * 2.5 }}
+    <div
+      className="w-1 h-4 rounded-full"
+      style={{
+        background: 'linear-gradient(to bottom, hsl(200 80% 70% / 0.6), hsl(210 90% 50% / 0.2))',
+      }}
     />
   </motion.div>
+);
+
+// Water wave SVG
+const WaterWave: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className, style }) => (
+  <svg viewBox="0 0 1200 120" className={className} style={style} preserveAspectRatio="none">
+    <path
+      d="M0,60 C200,100 400,20 600,60 C800,100 1000,20 1200,60 L1200,120 L0,120 Z"
+      fill="currentColor"
+    />
+  </svg>
 );
 
 const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
@@ -36,47 +66,42 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [shakeCard, setShakeCard] = useState(false);
   const [shakeUser, setShakeUser] = useState(false);
   const [shakePass, setShakePass] = useState(false);
-  const [lightningFlash, setLightningFlash] = useState(false);
+  const [waterSplash, setWaterSplash] = useState(false);
   const [redFlash, setRedFlash] = useState(false);
   const [successBurst, setSuccessBurst] = useState(false);
-  const [lightningBolts, setLightningBolts] = useState<{ id: number; x: number; delay: number }[]>([]);
-  const boltIdRef = useRef(0);
 
-  // Random lightning strikes
-  useEffect(() => {
-    const strike = () => {
-      const id = boltIdRef.current++;
-      const x = 10 + Math.random() * 80;
-      setLightningBolts(prev => [...prev, { id, x, delay: 0 }]);
-      setLightningFlash(true);
-      setTimeout(() => setLightningFlash(false), 150);
-      setTimeout(() => {
-        setLightningBolts(prev => prev.filter(b => b.id !== id));
-      }, 600);
-    };
-
-    const scheduleNext = () => {
-      const interval = 3000 + Math.random() * 2000;
-      return setTimeout(() => {
-        strike();
-        timerRef.current = scheduleNext();
-      }, interval);
-    };
-
-    const timerRef = { current: scheduleNext() };
-    return () => clearTimeout(timerRef.current);
-  }, []);
-
-  // Mini lightning bolts data
-  const minibolts = useRef(
-    Array.from({ length: 12 }, () => ({
-      delay: Math.random() * 4,
+  // Water ripples data
+  const ripples = useRef(
+    Array.from({ length: 8 }, () => ({
+      delay: Math.random() * 5,
       x: 5 + Math.random() * 90,
-      y: 5 + Math.random() * 90,
-      rotation: -40 + Math.random() * 80,
-      size: 8 + Math.random() * 16,
+      y: 60 + Math.random() * 35,
+      size: 20 + Math.random() * 40,
     }))
   ).current;
+
+  // Water drops data
+  const drops = useRef(
+    Array.from({ length: 15 }, () => ({
+      delay: Math.random() * 6,
+      x: 5 + Math.random() * 90,
+      duration: 3 + Math.random() * 4,
+    }))
+  ).current;
+
+  // Random water splash effect
+  useEffect(() => {
+    const schedule = () => {
+      const interval = 4000 + Math.random() * 3000;
+      return setTimeout(() => {
+        setWaterSplash(true);
+        setTimeout(() => setWaterSplash(false), 800);
+        timerRef.current = schedule();
+      }, interval);
+    };
+    const timerRef = { current: schedule() };
+    return () => clearTimeout(timerRef.current);
+  }, []);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -107,24 +132,48 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex items-center justify-center"
-      style={{ background: 'linear-gradient(135deg, hsl(220 30% 6%), hsl(240 20% 10%), hsl(220 25% 8%))' }}>
-      
-      {/* Stormy sky overlay */}
-      <div className="absolute inset-0 opacity-30"
+      style={{ background: 'linear-gradient(135deg, hsl(210 40% 8%), hsl(220 50% 12%), hsl(200 30% 6%))' }}>
+
+      {/* Deep ocean overlay */}
+      <div className="absolute inset-0 opacity-40"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, hsl(45 80% 20% / 0.3) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, hsl(270 40% 15% / 0.4) 0%, transparent 50%)',
+          background: 'radial-gradient(ellipse at 50% 100%, hsl(200 60% 20% / 0.5) 0%, transparent 60%), radial-gradient(ellipse at 20% 30%, hsl(210 50% 15% / 0.4) 0%, transparent 50%)',
         }}
       />
 
-      {/* Lightning flash overlay */}
+      {/* Animated water waves at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+        <motion.div
+          animate={{ x: [0, -50, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <WaterWave
+            className="w-[200%] h-20 opacity-10"
+            style={{ color: 'hsl(200 80% 50%)' }}
+          />
+        </motion.div>
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+        <motion.div
+          animate={{ x: [0, 30, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        >
+          <WaterWave
+            className="w-[200%] h-16 opacity-[0.07]"
+            style={{ color: 'hsl(210 70% 60%)' }}
+          />
+        </motion.div>
+      </div>
+
+      {/* Water splash flash */}
       <AnimatePresence>
-        {lightningFlash && (
+        {waterSplash && (
           <motion.div
             className="absolute inset-0 z-10 pointer-events-none"
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.4, 0.1, 0.3, 0] }}
-            transition={{ duration: 0.4 }}
-            style={{ background: 'hsl(45 100% 70%)' }}
+            animate={{ opacity: [0, 0.15, 0.05, 0.1, 0] }}
+            transition={{ duration: 0.8 }}
+            style={{ background: 'hsl(200 80% 60%)' }}
           />
         )}
       </AnimatePresence>
@@ -142,7 +191,7 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         )}
       </AnimatePresence>
 
-      {/* Success golden burst */}
+      {/* Success water burst */}
       <AnimatePresence>
         {successBurst && (
           <motion.div
@@ -152,7 +201,7 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             transition={{ duration: 0.8 }}
           >
             <div className="absolute inset-0" style={{
-              background: 'radial-gradient(circle at center, hsl(45 100% 60%) 0%, hsl(40 100% 40%) 30%, hsl(35 80% 20%) 60%, transparent 100%)',
+              background: 'radial-gradient(circle at center, hsl(200 80% 60%) 0%, hsl(210 70% 40%) 30%, hsl(220 50% 15%) 60%, transparent 100%)',
             }} />
             {[...Array(12)].map((_, i) => (
               <motion.div
@@ -161,7 +210,7 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 style={{
                   width: 3,
                   height: 80,
-                  background: 'linear-gradient(to bottom, hsl(45 100% 70%), transparent)',
+                  background: 'linear-gradient(to bottom, hsl(200 80% 70%), transparent)',
                   transformOrigin: 'center 200px',
                   rotate: `${i * 30}deg`,
                 }}
@@ -175,37 +224,25 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
               animate={{ scale: [0, 3, 5] }}
               transition={{ duration: 1 }}
               className="absolute w-20 h-20 rounded-full"
-              style={{ background: 'radial-gradient(circle, hsl(45 100% 80%), transparent 70%)' }}
+              style={{ background: 'radial-gradient(circle, hsl(200 80% 70%), transparent 70%)' }}
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Lightning bolts */}
-      {lightningBolts.map(bolt => (
-        <motion.div
-          key={bolt.id}
-          className="absolute top-0 z-10 pointer-events-none"
-          style={{ left: `${bolt.x}%` }}
-          initial={{ opacity: 0, scaleY: 0 }}
-          animate={{ opacity: [0, 1, 0.5, 0.8, 0], scaleY: [0, 1, 1, 1, 0] }}
-          transition={{ duration: 0.5 }}
-        >
-          <LightningBolt
-            className="h-[50vh] w-8 drop-shadow-[0_0_15px_hsl(45,100%,60%)]"
-            style={{ color: 'hsl(45 100% 65%)' }}
-          />
-        </motion.div>
+      {/* Water drops */}
+      {drops.map((d, i) => (
+        <WaterDrop key={i} {...d} />
       ))}
 
-      {/* Mini lightning bolts */}
-      {minibolts.map((b, i) => (
-        <MiniBolt key={i} {...b} />
+      {/* Water ripples */}
+      {ripples.map((r, i) => (
+        <WaterRipple key={i} {...r} />
       ))}
 
       {/* Main content */}
       <div className="relative z-20 flex items-center gap-0 lg:gap-8 max-w-5xl w-full px-4">
-        {/* Zenitsu character - desktop */}
+        {/* Tanjiro character - desktop */}
         <motion.div
           className="hidden lg:block relative flex-shrink-0"
           initial={{ opacity: 0, x: -50 }}
@@ -218,27 +255,26 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             className="relative"
           >
             <img
-              src={zenitsuImg}
-              alt="Zenitsu Agatsuma"
-              className="h-[480px] w-auto drop-shadow-[0_0_30px_hsl(45,100%,50%,0.4)] select-none"
+              src={tanjiroImg}
+              alt="Tanjiro Kamado"
+              className="h-[480px] w-auto drop-shadow-[0_0_30px_hsl(200,80%,50%,0.4)] select-none"
               draggable={false}
             />
-            {/* Lightning aura around character */}
+            {/* Water aura around character */}
             <div className="absolute inset-0 pointer-events-none">
               {[...Array(6)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="absolute"
+                  className="absolute rounded-full"
                   style={{
                     left: `${20 + Math.random() * 60}%`,
                     top: `${10 + Math.random() * 80}%`,
-                    width: 2,
-                    height: 20 + Math.random() * 30,
-                    background: 'linear-gradient(to bottom, hsl(45 100% 70%), transparent)',
-                    transform: `rotate(${-30 + Math.random() * 60}deg)`,
+                    width: 6 + Math.random() * 8,
+                    height: 6 + Math.random() * 8,
+                    background: 'radial-gradient(circle, hsl(200 80% 70% / 0.6), transparent)',
                   }}
-                  animate={{ opacity: [0, 1, 0], scaleY: [0.5, 1, 0.3] }}
-                  transition={{ duration: 0.8, delay: i * 0.4, repeat: Infinity, repeatDelay: 1.5 + Math.random() * 2 }}
+                  animate={{ opacity: [0, 0.8, 0], scale: [0.5, 1.5, 0.5], y: [0, -20, -40] }}
+                  transition={{ duration: 2, delay: i * 0.5, repeat: Infinity, repeatDelay: 1 + Math.random() * 2 }}
                 />
               ))}
             </div>
@@ -255,42 +291,42 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <div
             className="rounded-2xl p-8 backdrop-blur-xl border relative overflow-hidden"
             style={{
-              background: 'linear-gradient(145deg, hsl(220 20% 12% / 0.9), hsl(230 25% 8% / 0.95))',
-              borderColor: 'hsl(45 60% 30% / 0.3)',
-              boxShadow: '0 0 40px hsl(45 100% 50% / 0.08), 0 20px 60px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(45 60% 40% / 0.1)',
+              background: 'linear-gradient(145deg, hsl(210 30% 12% / 0.9), hsl(220 35% 8% / 0.95))',
+              borderColor: 'hsl(200 50% 30% / 0.3)',
+              boxShadow: '0 0 40px hsl(200 80% 50% / 0.08), 0 20px 60px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(200 50% 40% / 0.1)',
             }}
           >
-            {/* Card electric border glow */}
+            {/* Card water border glow */}
             <div className="absolute inset-0 rounded-2xl pointer-events-none"
               style={{
-                background: 'linear-gradient(135deg, hsl(45 100% 50% / 0.05) 0%, transparent 50%, hsl(45 100% 50% / 0.03) 100%)',
+                background: 'linear-gradient(135deg, hsl(200 80% 50% / 0.05) 0%, transparent 50%, hsl(200 80% 50% / 0.03) 100%)',
               }}
             />
 
             {/* Logo area */}
             <div className="text-center mb-8 relative">
               <motion.div
-                animate={{ textShadow: ['0 0 10px hsl(45 100% 50% / 0.3)', '0 0 20px hsl(45 100% 50% / 0.6)', '0 0 10px hsl(45 100% 50% / 0.3)'] }}
+                animate={{ textShadow: ['0 0 10px hsl(200 80% 50% / 0.3)', '0 0 20px hsl(200 80% 50% / 0.6)', '0 0 10px hsl(200 80% 50% / 0.3)'] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <Zap className="w-8 h-8" style={{ color: 'hsl(45 100% 55%)' }} />
-                  <h1 className="text-3xl font-black tracking-tight" style={{ color: 'hsl(45 100% 70%)' }}>
+                  <Droplets className="w-8 h-8" style={{ color: 'hsl(200 80% 60%)' }} />
+                  <h1 className="text-3xl font-black tracking-tight" style={{ color: 'hsl(200 80% 70%)' }}>
                     Nezuko-chaaan!
                   </h1>
                 </div>
               </motion.div>
-              <p className="text-sm font-medium" style={{ color: 'hsl(220 15% 55%)' }}>
-                ⚡ Thunder Breathing, First Form ⚡
+              <p className="text-sm font-medium" style={{ color: 'hsl(210 20% 55%)' }}>
+                🌊 Water Breathing, First Form 🌊
               </p>
             </div>
 
-            {/* Zenitsu mobile - small version */}
+            {/* Tanjiro mobile - small version */}
             <div className="lg:hidden flex justify-center mb-6">
               <motion.img
-                src={zenitsuImg}
-                alt="Zenitsu"
-                className="h-32 w-auto opacity-70 drop-shadow-[0_0_20px_hsl(45,100%,50%,0.3)]"
+                src={tanjiroImg}
+                alt="Tanjiro"
+                className="h-32 w-auto opacity-70 drop-shadow-[0_0_20px_hsl(200,80%,50%,0.3)]"
                 animate={{ y: [0, -5, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                 draggable={false}
@@ -304,7 +340,7 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 animate={shakeUser ? { x: [0, -8, 8, -8, 8, 0] } : {}}
                 transition={{ duration: 0.4 }}
               >
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'hsl(220 15% 50%)' }}>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'hsl(210 20% 50%)' }}>
                   Username
                 </label>
                 <input
@@ -313,13 +349,13 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                   onChange={e => { setUsername(e.target.value); setError(''); }}
                   className="w-full h-11 px-4 rounded-lg text-sm font-medium outline-none transition-all duration-200 focus:ring-2"
                   style={{
-                    background: 'hsl(220 20% 14%)',
-                    border: `1px solid ${shakeUser ? 'hsl(0 80% 50%)' : 'hsl(220 15% 22%)'}`,
+                    background: 'hsl(210 25% 14%)',
+                    border: `1px solid ${shakeUser ? 'hsl(0 80% 50%)' : 'hsl(210 20% 22%)'}`,
                     color: 'hsl(0 0% 90%)',
-                    caretColor: 'hsl(45 100% 55%)',
+                    caretColor: 'hsl(200 80% 55%)',
                   }}
-                  onFocus={e => e.target.style.borderColor = 'hsl(45 80% 45%)'}
-                  onBlur={e => e.target.style.borderColor = 'hsl(220 15% 22%)'}
+                  onFocus={e => e.target.style.borderColor = 'hsl(200 70% 45%)'}
+                  onBlur={e => e.target.style.borderColor = 'hsl(210 20% 22%)'}
                   placeholder="Masukkan username"
                   autoComplete="username"
                 />
@@ -330,7 +366,7 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 animate={shakePass ? { x: [0, -8, 8, -8, 8, 0] } : {}}
                 transition={{ duration: 0.4 }}
               >
-                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'hsl(220 15% 50%)' }}>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'hsl(210 20% 50%)' }}>
                   Password
                 </label>
                 <div className="relative">
@@ -340,13 +376,13 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     onChange={e => { setPassword(e.target.value); setError(''); }}
                     className="w-full h-11 px-4 pr-11 rounded-lg text-sm font-medium outline-none transition-all duration-200 focus:ring-2"
                     style={{
-                      background: 'hsl(220 20% 14%)',
-                      border: `1px solid ${shakePass ? 'hsl(0 80% 50%)' : 'hsl(220 15% 22%)'}`,
+                      background: 'hsl(210 25% 14%)',
+                      border: `1px solid ${shakePass ? 'hsl(0 80% 50%)' : 'hsl(210 20% 22%)'}`,
                       color: 'hsl(0 0% 90%)',
-                      caretColor: 'hsl(45 100% 55%)',
+                      caretColor: 'hsl(200 80% 55%)',
                     }}
-                    onFocus={e => e.target.style.borderColor = 'hsl(45 80% 45%)'}
-                    onBlur={e => e.target.style.borderColor = 'hsl(220 15% 22%)'}
+                    onFocus={e => e.target.style.borderColor = 'hsl(200 70% 45%)'}
+                    onBlur={e => e.target.style.borderColor = 'hsl(210 20% 22%)'}
                     placeholder="Masukkan password"
                     autoComplete="current-password"
                   />
@@ -354,7 +390,7 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded transition-colors"
-                    style={{ color: 'hsl(220 15% 45%)' }}
+                    style={{ color: 'hsl(210 20% 45%)' }}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -384,25 +420,25 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
                 whileTap={{ scale: 0.98 }}
                 className="relative w-full h-12 rounded-lg text-sm font-bold uppercase tracking-wider transition-all duration-300 overflow-hidden disabled:opacity-70"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(45 100% 45%), hsl(40 100% 38%))',
-                  color: 'hsl(220 30% 8%)',
-                  boxShadow: '0 0 20px hsl(45 100% 50% / 0.2), 0 4px 15px hsl(0 0% 0% / 0.3)',
+                  background: 'linear-gradient(135deg, hsl(200 80% 45%), hsl(210 70% 38%))',
+                  color: 'hsl(0 0% 98%)',
+                  boxShadow: '0 0 20px hsl(200 80% 50% / 0.2), 0 4px 15px hsl(0 0% 0% / 0.3)',
                 }}
               >
-                {/* Electric pulse glow on hover */}
+                {/* Water pulse glow */}
                 <motion.div
                   className="absolute inset-0 pointer-events-none"
                   animate={{
                     boxShadow: [
-                      'inset 0 0 20px hsl(45 100% 60% / 0)',
-                      'inset 0 0 20px hsl(45 100% 60% / 0.3)',
-                      'inset 0 0 20px hsl(45 100% 60% / 0)',
+                      'inset 0 0 20px hsl(200 80% 60% / 0)',
+                      'inset 0 0 20px hsl(200 80% 60% / 0.3)',
+                      'inset 0 0 20px hsl(200 80% 60% / 0)',
                     ],
                   }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 />
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  <Zap className="w-4 h-4" />
+                  <Droplets className="w-4 h-4" />
                   {successBurst ? 'Masuk...' : 'Login'}
                 </span>
               </motion.button>
