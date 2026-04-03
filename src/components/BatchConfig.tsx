@@ -139,12 +139,11 @@ function parseExcelRows(data: Record<string, unknown>[], tab: Tab): ParsedRow[] 
 function generateBatchScript(rows: ParsedRow[], settings: BatchSettings): string {
   if (rows.length === 0) return '# Upload an Excel file to generate batch CLI script...\n';
 
-  const lines: string[] = [];
+  const lines: string[] = ['conf t'];
   for (const r of rows) {
     const olt = `${r.rack}/${r.slot}/${r.port}`;
     const onu = `${olt}:${r.ponId}`;
     lines.push(
-      `conf t`,
       `interface gpon-olt_${olt}`,
       `no onu ${r.ponId}`,
       `onu ${r.ponId} type ZTEG-F609 sn ${r.sn}`,
@@ -168,7 +167,6 @@ function generateBatchScript(rows: ParsedRow[], settings: BatchSettings): string
       `wan-ip 2 mode static ip-profile static ip-address ${r.ip} mask 255.255.0.0 vlan-profile STATIC200 host 2`,
       `security-mgmt 1 state enable mode forward protocol web`,
       `!`,
-      ``,
     );
   }
   lines.push('end', 'wr', '');
