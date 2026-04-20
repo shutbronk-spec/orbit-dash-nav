@@ -77,26 +77,28 @@ function sortByIdPelanggan(a: RawRow, b: RawRow): number {
   return idA.localeCompare(idB);
 }
 
+// Replace kode di segmen kedua-terakhir.
+// - kodeLama bisa berupa huruf+angka ("J7"), huruf saja ("J"), atau angka saja ("5").
+// - kodeBaru bisa berupa "PT6" (full), "PT" (huruf saja → port lama dipertahankan),
+//   atau "6" (angka saja → huruf lama dipertahankan).
 function replaceKodeInUsername(username: string, kodeLama: string, kodeBaru: string): string {
   if (!kodeLama || !kodeBaru) return username;
   const parts = username.split('-');
   if (parts.length < 2) return username;
   const idx = parts.length - 2;
-  if (parts[idx].toUpperCase() === kodeLama.toUpperCase()) {
-    // Preserve the number part
-    const m = parts[idx].match(/^([A-Za-z]+)(\d+)$/);
-    if (m) {
-      // Extract letter part of kodeBaru and number from kodeBaru
-      const mBaru = kodeBaru.match(/^([A-Za-z]+)(\d+)$/);
-      if (mBaru) {
-        parts[idx] = mBaru[1].toUpperCase() + mBaru[2];
-      } else {
-        parts[idx] = kodeBaru.toUpperCase() + m[2];
-      }
-    } else {
-      parts[idx] = kodeBaru.toUpperCase();
-    }
-  }
+  if (parts[idx].toUpperCase() !== kodeLama.toUpperCase()) return username;
+
+  const segMatch = parts[idx].match(/^([A-Za-z]*)(\d*)$/);
+  const oldLetters = segMatch?.[1] || '';
+  const oldDigits = segMatch?.[2] || '';
+
+  const baruMatch = kodeBaru.match(/^([A-Za-z]*)(\d*)$/);
+  const newLetters = baruMatch?.[1] || '';
+  const newDigits = baruMatch?.[2] || '';
+
+  const finalLetters = newLetters || oldLetters;
+  const finalDigits = newDigits || oldDigits;
+  parts[idx] = (finalLetters.toUpperCase() + finalDigits) || kodeBaru.toUpperCase();
   return parts.join('-');
 }
 
