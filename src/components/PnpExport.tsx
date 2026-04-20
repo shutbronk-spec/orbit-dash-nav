@@ -261,23 +261,15 @@ const PnpExport: React.FC = () => {
       let username = r.username;
       let keterangan = '';
 
-      // Auto-koreksi typo
+      // Auto-koreksi typo: ganti seluruh segmen jadi majorityKode
       if (majorityKode) {
         const { kode } = extractKodePort(username);
         if (kode && kode !== majorityKode) {
           const parts = username.split('-');
           const idx = parts.length - 2;
-          const m = parts[idx].match(/^([A-Za-z]+)(\d+)$/);
-          if (m) {
-            const mMaj = majorityKode.match(/^([A-Za-z]+)(\d+)$/);
-            if (mMaj) {
-              parts[idx] = mMaj[1] + mMaj[2];
-            } else {
-              parts[idx] = majorityKode + m[2];
-            }
-            username = parts.join('-');
-            keterangan = `dikoreksi (${kode})`;
-          }
+          parts[idx] = majorityKode;
+          username = parts.join('-');
+          keterangan = `dikoreksi (${kode})`;
         }
       }
 
