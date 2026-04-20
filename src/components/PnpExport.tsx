@@ -45,11 +45,14 @@ const MODE_ICONS: Record<Mode, React.ElementType> = {
 const PRESETS: Preset[] = ['JAMBAN', 'CIBATU', 'TUNGGILIS', 'LPM'];
 
 // --- Helpers ---
+// Kode port = segmen kedua-terakhir dalam username.
+// Bisa berupa: huruf+angka (J7, AB76, PT6), HANYA huruf (J, PT), atau HANYA angka (5, 12).
 function extractKodePort(username: string): { kode: string; segments: string[] } {
   const parts = username.split('-');
   if (parts.length < 2) return { kode: '', segments: parts };
   const seg = parts[parts.length - 2] || '';
-  const m = seg.match(/^([A-Za-z]+)(\d+)$/);
+  // Match: letters+digits, OR letters only, OR digits only
+  const m = seg.match(/^([A-Za-z]+\d+|[A-Za-z]+|\d+)$/);
   return { kode: m ? m[0].toUpperCase() : '', segments: parts };
 }
 
@@ -74,26 +77,28 @@ function sortByIdPelanggan(a: RawRow, b: RawRow): number {
   return idA.localeCompare(idB);
 }
 
+// Replace kode di segmen kedua-terakhir.
+// - kodeLama bisa berupa huruf+angka ("J7"), huruf saja ("J"), atau angka saja ("5").
+// - kodeBaru bisa berupa "PT6" (full), "PT" (huruf saja → port lama dipertahankan),
+//   atau "6" (angka saja → huruf lama dipertahankan).
 function replaceKodeInUsername(username: string, kodeLama: string, kodeBaru: string): string {
   if (!kodeLama || !kodeBaru) return username;
   const parts = username.split('-');
   if (parts.length < 2) return username;
   const idx = parts.length - 2;
-  if (parts[idx].toUpperCase() === kodeLama.toUpperCase()) {
-    // Preserve the number part
-    const m = parts[idx].match(/^([A-Za-z]+)(\d+)$/);
-    if (m) {
-      // Extract letter part of kodeBaru and number from kodeBaru
-      const mBaru = kodeBaru.match(/^([A-Za-z]+)(\d+)$/);
-      if (mBaru) {
-        parts[idx] = mBaru[1].toUpperCase() + mBaru[2];
-      } else {
-        parts[idx] = kodeBaru.toUpperCase() + m[2];
-      }
-    } else {
-      parts[idx] = kodeBaru.toUpperCase();
-    }
-  }
+  if (parts[idx].toUpperCase() !== kodeLama.toUpperCase()) return username;
+
+  const segMatch = parts[idx].match(/^([A-Za-z]*)(\d*)$/);
+  const oldLetters = segMatch?.[1] || '';
+  const oldDigits = segMatch?.[2] || '';
+
+  const baruMatch = kodeBaru.match(/^([A-Za-z]*)(\d*)$/);
+  const newLetters = baruMatch?.[1] || '';
+  const newDigits = baruMatch?.[2] || '';
+
+  const finalLetters = newLetters || oldLetters;
+  const finalDigits = newDigits || oldDigits;
+  parts[idx] = (finalLetters.toUpperCase() + finalDigits) || kodeBaru.toUpperCase();
   return parts.join('-');
 }
 
@@ -256,23 +261,15 @@ const PnpExport: React.FC = () => {
       let username = r.username;
       let keterangan = '';
 
-      // Auto-koreksi typo
+      // Auto-koreksi typo: ganti seluruh segmen jadi majorityKode
       if (majorityKode) {
         const { kode } = extractKodePort(username);
         if (kode && kode !== majorityKode) {
           const parts = username.split('-');
           const idx = parts.length - 2;
-          const m = parts[idx].match(/^([A-Za-z]+)(\d+)$/);
-          if (m) {
-            const mMaj = majorityKode.match(/^([A-Za-z]+)(\d+)$/);
-            if (mMaj) {
-              parts[idx] = mMaj[1] + mMaj[2];
-            } else {
-              parts[idx] = majorityKode + m[2];
-            }
-            username = parts.join('-');
-            keterangan = `dikoreksi (${kode})`;
-          }
+          parts[idx] = majorityKode;
+          username = parts.join('-');
+          keterangan = `dikoreksi (${kode})`;
         }
       }
 
