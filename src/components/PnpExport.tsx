@@ -45,11 +45,14 @@ const MODE_ICONS: Record<Mode, React.ElementType> = {
 const PRESETS: Preset[] = ['JAMBAN', 'CIBATU', 'TUNGGILIS', 'LPM'];
 
 // --- Helpers ---
+// Kode port = segmen kedua-terakhir dalam username.
+// Bisa berupa: huruf+angka (J7, AB76, PT6), HANYA huruf (J, PT), atau HANYA angka (5, 12).
 function extractKodePort(username: string): { kode: string; segments: string[] } {
   const parts = username.split('-');
   if (parts.length < 2) return { kode: '', segments: parts };
   const seg = parts[parts.length - 2] || '';
-  const m = seg.match(/^([A-Za-z]+)(\d+)$/);
+  // Match: letters+digits, OR letters only, OR digits only
+  const m = seg.match(/^([A-Za-z]+\d+|[A-Za-z]+|\d+)$/);
   return { kode: m ? m[0].toUpperCase() : '', segments: parts };
 }
 
