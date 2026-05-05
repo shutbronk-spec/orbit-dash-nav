@@ -63,22 +63,43 @@ function parseRackSlotPort(username: string): { rack: number; slot: number; port
   const parts = username.split('-');
   if (parts.length < 2) return { rack: 1, slot: 2, port: 1, ponId: 1 };
 
-  const lastSeg = parts[parts.length - 1];
-  const ponId = parseInt(lastSeg, 10) || 1;
+  const ponId = parseInt(parts[parts.length - 1], 10) || 1;
 
-  const kodePart = parts[parts.length - 2] || '';
-  // Extract letters and number from kode (e.g. "J2" → letters="J", num=2)
-  const kodeMatch = kodePart.match(/^([A-Za-z]+)(\d+)$/);
-  if (!kodeMatch) return { rack: 1, slot: 2, port: ponId, ponId };
+  // Port = segmen kedua-terakhir. Jika angka murni → langsung pakai.
+  // Jika huruf+angka (misal "J7") → ambil angkanya.
+  const portSeg = parts[parts.length - 2] || '';
+  let port = 1;
+  if (/^\d+$/.test(portSeg)) {
+    port = parseInt(portSeg, 10);
+  } else {
+    const m = portSeg.match(/^([A-Za-z]+)(\d+)$/);
+    if (m) port = parseInt(m[2], 10) || 1;
+  }
 
-  const letters = kodeMatch[1].toUpperCase();
-  const portNum = parseInt(kodeMatch[2], 10) || 1;
+  // Slot: cari kode huruf di segmen mana pun (selain port & ponId), lookup SLOT_MAP.
+  // Default = 2.
+  let slot = 2;
+  for (let i = 0; i < parts.length - 2; i++) {
+    const m = parts[i].match(/^([A-Za-z]+)\d*$/);
+    if (m) {
+      const letters = m[1].toUpperCase();
+      if (SLOT_MAP[letters] !== undefined) { slot = SLOT_MAP[letters]; break; }
+      if (SLOT_MAP[letters[0]] !== undefined) { slot = SLOT_MAP[letters[0]]; break; }
+    }
+  }
+  // Juga cek segmen port itu sendiri kalau berbentuk huruf+angka (kompat lama)
+  if (slot === 2) {
+    const m = portSeg.match(/^([A-Za-z]+)\d+$/);
+    if (m) {
+      const letters = m[1].toUpperCase();
+      if (SLOT_MAP[letters] !== undefined) slot = SLOT_MAP[letters];
+      else if (SLOT_MAP[letters[0]] !== undefined) slot = SLOT_MAP[letters[0]];
+    }
+  }
 
-  // Try multi-char first, then single-char
-  const slot = SLOT_MAP[letters] ?? SLOT_MAP[letters[0]] ?? 2;
-
-  return { rack: 1, slot, port: portNum, ponId };
+  return { rack: 1, slot, port, ponId };
 }
+
 
 function calcIpStatic(idOrUsername: string, tab: Tab): string {
   const parts = idOrUsername.split('-');
