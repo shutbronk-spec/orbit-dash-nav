@@ -158,7 +158,7 @@ function parseExcelRows(data: Record<string, unknown>[], tab: Tab): ParsedRow[] 
 
     if (!username && !rawId) continue;
 
-    const { rack, slot, port, ponId } = parseRackSlotPort(username);
+    const { rack, slot, port, ponId } = parseRackSlotPort(username, tab);
     const ip = calcIpStatic(id || username, tab);
 
     rows.push({ username: username || id, id, sn: sn || 'ZTEG12345678', rack, slot, port, ponId, ip });
