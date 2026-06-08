@@ -59,14 +59,18 @@ interface ParsedRow {
   ip: string;
 }
 
-function parseRackSlotPort(username: string): { rack: number; slot: number; port: number; ponId: number } {
+const TAB_SLOT: Record<Tab, number> = {
+  JAMBAN: 7, CIBATU: 3, TUNGGILIS: 2, LPM: 2,
+};
+
+function parseRackSlotPort(username: string, tab: Tab): { rack: number; slot: number; port: number; ponId: number } {
   const parts = username.split('-');
-  if (parts.length < 2) return { rack: 1, slot: 2, port: 1, ponId: 1 };
+  const defaultSlot = TAB_SLOT[tab] ?? 2;
+  if (parts.length < 2) return { rack: 1, slot: defaultSlot, port: 1, ponId: 1 };
 
   const ponId = parseInt(parts[parts.length - 1], 10) || 1;
 
-  // Port = segmen kedua-terakhir. Jika angka murni → langsung pakai.
-  // Jika huruf+angka (misal "J7") → ambil angkanya.
+  // Port = segmen kedua-terakhir.
   const portSeg = parts[parts.length - 2] || '';
   let port = 1;
   if (/^\d+$/.test(portSeg)) {
@@ -76,24 +80,29 @@ function parseRackSlotPort(username: string): { rack: number; slot: number; port
     if (m) port = parseInt(m[2], 10) || 1;
   }
 
-  // Slot: cari kode huruf di segmen mana pun (selain port & ponId), lookup SLOT_MAP.
-  // Default = 2.
-  let slot = 2;
+  // Slot detection — strict:
+  //  - HANYA pure-letters (no digit) dengan panjang <= 2 yang exact-match SLOT_MAP
+  //  - skip segmen letter+digit (itu kode IP / CODE_MAP, bukan slot)
+  //  - skip nama customer (letters > 2 char)
+  //  - kalau tidak ada match -> pakai default per tab
+  let slot = defaultSlot;
+  let slotFound = false;
   for (let i = 0; i < parts.length - 2; i++) {
-    const m = parts[i].match(/^([A-Za-z]+)\d*$/);
-    if (m) {
-      const letters = m[1].toUpperCase();
-      if (SLOT_MAP[letters] !== undefined) { slot = SLOT_MAP[letters]; break; }
-      if (SLOT_MAP[letters[0]] !== undefined) { slot = SLOT_MAP[letters[0]]; break; }
+    const pure = parts[i].match(/^([A-Za-z]+)$/);
+    if (!pure) continue; // skip angka murni & letter+digit
+    const letters = pure[1].toUpperCase();
+    if (letters.length <= 2 && SLOT_MAP[letters] !== undefined) {
+      slot = SLOT_MAP[letters];
+      slotFound = true;
+      break;
     }
   }
-  // Juga cek segmen port itu sendiri kalau berbentuk huruf+angka (kompat lama)
-  if (slot === 2) {
+  // Kompat lama: kalau portSeg berbentuk huruf+angka (mis. "J7") dan belum ada match
+  if (!slotFound) {
     const m = portSeg.match(/^([A-Za-z]+)\d+$/);
     if (m) {
       const letters = m[1].toUpperCase();
-      if (SLOT_MAP[letters] !== undefined) slot = SLOT_MAP[letters];
-      else if (SLOT_MAP[letters[0]] !== undefined) slot = SLOT_MAP[letters[0]];
+      if (letters.length <= 2 && SLOT_MAP[letters] !== undefined) slot = SLOT_MAP[letters];
     }
   }
 
