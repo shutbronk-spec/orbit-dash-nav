@@ -43,7 +43,7 @@ const CODE_MAP: Record<string, number> = {
 
 const SLOT_MAP: Record<string, number> = {
   J:7,T:4,P:3,M:2,F:5,S:6,LG:1,PD:1,PH:2,L:2,C:1,B:1,
-  BM:1,CH:2,BR:2,JT:2,PT:1,BT:2,PL:1,PS:2,
+  BM:1,CH:2,BR:2,JT:2,PT:1,BT:2,PL:1,PS:2,PW:2,
 };
 
 function calcIpStatic(userPppoe: string, tab: Tab): string {
