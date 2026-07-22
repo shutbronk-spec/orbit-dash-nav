@@ -96,9 +96,14 @@ function replaceKodeInUsername(username: string, kodeLama: string, kodeBaru: str
   const newLetters = baruMatch?.[1] || '';
   const newDigits = baruMatch?.[2] || '';
 
-  const finalLetters = newLetters || oldLetters;
-  const finalDigits = newDigits || oldDigits;
-  parts[idx] = (finalLetters.toUpperCase() + finalDigits) || kodeBaru.toUpperCase();
+  // Jika kodeBaru punya huruf+angka atau angka saja → replace penuh (jangan bawa huruf lama).
+  // Jika kodeBaru huruf saja → pertahankan angka port lama.
+  let replaced: string;
+  if (newLetters && newDigits) replaced = newLetters.toUpperCase() + newDigits;
+  else if (newDigits) replaced = newDigits;
+  else if (newLetters) replaced = newLetters.toUpperCase() + oldDigits;
+  else replaced = oldLetters + oldDigits;
+  parts[idx] = replaced || kodeBaru.toUpperCase();
   return parts.join('-');
 }
 
