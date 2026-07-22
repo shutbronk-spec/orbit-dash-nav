@@ -61,7 +61,7 @@ interface ParsedRow {
 }
 
 const TAB_SLOT: Record<Tab, number> = {
-  JAMBAN: 2, CIBATU: 3, TUNGGILIS: 2, LPM: 2,
+  JAMBAN: 2, CIBATU: 2, TUNGGILIS: 2, LPM: 2,
 };
 
 function parseRackSlotPort(username: string, tab: Tab): { rack: number; slot: number; port: number; ponId: number } {
