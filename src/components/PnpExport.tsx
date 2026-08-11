@@ -172,6 +172,7 @@ const PnpExport: React.FC = () => {
   }, []);
 
   // --- Parse tujuan file (mode SISIP) ---
+  // Robust: cari ONU ID dari kolom C (angka), atau dari username (segmen terakhir) di kolom manapun.
   const handleFileTujuan = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -183,13 +184,25 @@ const PnpExport: React.FC = () => {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
       const ids = new Set<number>();
-      for (let r = range.s.r + 1; r <= range.e.r; r++) {
-        const cellC = ws[XLSX.utils.encode_cell({ r, c: 2 })];
-        const val = parseInt(String(cellC?.v ?? ''), 10);
-        if (!isNaN(val) && val >= 1 && val <= 128) ids.add(val);
+      for (let r = range.s.r; r <= range.e.r; r++) {
+        let found = false;
+        // 1) username bergaya "xxx-xxx-KODE-ID"
+        for (let c = range.s.c; c <= range.e.c && !found; c++) {
+          const raw = String(ws[XLSX.utils.encode_cell({ r, c })]?.v ?? '').trim();
+          if (raw.includes('-')) {
+            const id = extractOnuId(raw);
+            if (id >= 1 && id <= 128) { ids.add(id); found = true; }
+          }
+        }
+        // 2) fallback: kolom C berisi ONU ID langsung
+        if (!found) {
+          const val = parseInt(String(ws[XLSX.utils.encode_cell({ r, c: 2 })]?.v ?? ''), 10);
+          if (!isNaN(val) && val >= 1 && val <= 128) ids.add(val);
+        }
       }
       setOccupiedIds(ids);
-      toast.success(`File tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
+      if (ids.size === 0) toast.error('Tidak ada ONU ID terdeteksi di file tujuan.');
+      else toast.success(`File tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
     };
     reader.readAsArrayBuffer(file);
   }, []);
@@ -224,15 +237,27 @@ const PnpExport: React.FC = () => {
     try {
       const res = await fetch(`${gasUrl}?action=loadOltTujuan`);
       const json = await res.json();
-      if (json.status === 'success' && Array.isArray(json.onuIds)) {
-        const ids = new Set<number>(json.onuIds.filter((n: number) => n >= 1 && n <= 128));
-        setOccupiedIds(ids);
-        toast.success(`Tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
+      const ids = new Set<number>();
+      if (Array.isArray(json?.onuIds)) {
+        json.onuIds.forEach((n: unknown) => {
+          const v = parseInt(String(n), 10);
+          if (v >= 1 && v <= 128) ids.add(v);
+        });
       }
+      if (ids.size === 0 && Array.isArray(json?.data)) {
+        json.data.forEach((d: { username?: string; onuId?: number | string }) => {
+          const v = d.onuId !== undefined ? parseInt(String(d.onuId), 10) : (d.username ? extractOnuId(d.username) : NaN);
+          if (v >= 1 && v <= 128) ids.add(v);
+        });
+      }
+      if (ids.size === 0) { toast.error('Tujuan: tidak ada ONU ID terdeteksi.'); return; }
+      setOccupiedIds(ids);
+      toast.success(`Tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
     } catch {
       toast.error('Gagal load tujuan dari Google Sheet');
     }
   }, []);
+
 
   // --- Auto-koreksi info ---
   const majorityKode = useMemo(() => detectMajorityKode(rawRows), [rawRows]);
