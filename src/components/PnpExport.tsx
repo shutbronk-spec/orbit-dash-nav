@@ -319,9 +319,9 @@ const PnpExport: React.FC = () => {
       return;
     }
 
-    }
     toast.error('Tujuan: tidak ada ONU ID terdeteksi. Pastikan Apps Script punya action loadOltTujuan (Sheet2).');
-  }, []);
+  }, [rawRows]);
+
 
 
 
