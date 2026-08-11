@@ -181,25 +181,28 @@ const PnpExport: React.FC = () => {
     reader.onload = (evt) => {
       const data = new Uint8Array(evt.target?.result as ArrayBuffer);
       const wb = XLSX.read(data, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
       const ids = new Set<number>();
-      for (let r = range.s.r; r <= range.e.r; r++) {
-        let found = false;
-        // 1) username bergaya "xxx-xxx-KODE-ID"
-        for (let c = range.s.c; c <= range.e.c && !found; c++) {
-          const raw = String(ws[XLSX.utils.encode_cell({ r, c })]?.v ?? '').trim();
-          if (raw.includes('-')) {
-            const id = extractOnuId(raw);
-            if (id >= 1 && id <= 128) { ids.add(id); found = true; }
+      for (const name of wb.SheetNames) {
+        const ws = wb.Sheets[name];
+        if (!ws) continue;
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+        for (let r = range.s.r; r <= range.e.r; r++) {
+          let found = false;
+          for (let c = range.s.c; c <= range.e.c && !found; c++) {
+            const raw = String(ws[XLSX.utils.encode_cell({ r, c })]?.v ?? '').trim();
+            if (raw.includes('-')) {
+              const id = extractOnuId(raw);
+              if (id >= 1 && id <= 128) { ids.add(id); found = true; }
+            }
+          }
+          if (!found) {
+            const val = parseInt(String(ws[XLSX.utils.encode_cell({ r, c: 2 })]?.v ?? ''), 10);
+            if (!isNaN(val) && val >= 1 && val <= 128) ids.add(val);
           }
         }
-        // 2) fallback: kolom C berisi ONU ID langsung
-        if (!found) {
-          const val = parseInt(String(ws[XLSX.utils.encode_cell({ r, c: 2 })]?.v ?? ''), 10);
-          if (!isNaN(val) && val >= 1 && val <= 128) ids.add(val);
-        }
+        if (ids.size > 0) break;
       }
+
       setOccupiedIds(ids);
       if (ids.size === 0) toast.error('Tidak ada ONU ID terdeteksi di file tujuan.');
       else toast.success(`File tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
