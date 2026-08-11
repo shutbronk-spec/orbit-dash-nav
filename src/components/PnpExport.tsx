@@ -314,14 +314,18 @@ const PnpExport: React.FC = () => {
         onuIdBaru = startFrom + i;
         username = replaceOnuId(username, onuIdBaru);
       } else if (mode === 'SISIP') {
-        if (i < lubangKosong.length) {
+        if (occupiedIds.size === 0) {
+          keterangan = keterangan || 'upload file tujuan dulu';
+        } else if (i < lubangKosong.length) {
           onuIdBaru = lubangKosong[i];
           username = replaceOnuId(username, onuIdBaru);
+          keterangan = keterangan ? `${keterangan} • sisip ${onuIdBaru}` : `sisip ke lubang ${onuIdBaru}`;
         } else {
           keterangan = 'slot penuh';
           onuIdBaru = 0;
         }
       }
+
 
       result.push({
         no: i + 1,
