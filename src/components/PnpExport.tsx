@@ -339,7 +339,7 @@ const PnpExport: React.FC = () => {
     }
 
     return result;
-  }, [rawRows, mode, startFrom, kodeLama, kodeBaru, majorityKode, lubangKosong]);
+  }, [rawRows, mode, startFrom, kodeLama, kodeBaru, majorityKode, lubangKosong, occupiedIds]);
 
   // --- Download template ---
   const handleDownload = () => {
