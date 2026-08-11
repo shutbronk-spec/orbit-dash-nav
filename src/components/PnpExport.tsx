@@ -181,25 +181,28 @@ const PnpExport: React.FC = () => {
     reader.onload = (evt) => {
       const data = new Uint8Array(evt.target?.result as ArrayBuffer);
       const wb = XLSX.read(data, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
       const ids = new Set<number>();
-      for (let r = range.s.r; r <= range.e.r; r++) {
-        let found = false;
-        // 1) username bergaya "xxx-xxx-KODE-ID"
-        for (let c = range.s.c; c <= range.e.c && !found; c++) {
-          const raw = String(ws[XLSX.utils.encode_cell({ r, c })]?.v ?? '').trim();
-          if (raw.includes('-')) {
-            const id = extractOnuId(raw);
-            if (id >= 1 && id <= 128) { ids.add(id); found = true; }
+      for (const name of wb.SheetNames) {
+        const ws = wb.Sheets[name];
+        if (!ws) continue;
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+        for (let r = range.s.r; r <= range.e.r; r++) {
+          let found = false;
+          for (let c = range.s.c; c <= range.e.c && !found; c++) {
+            const raw = String(ws[XLSX.utils.encode_cell({ r, c })]?.v ?? '').trim();
+            if (raw.includes('-')) {
+              const id = extractOnuId(raw);
+              if (id >= 1 && id <= 128) { ids.add(id); found = true; }
+            }
+          }
+          if (!found) {
+            const val = parseInt(String(ws[XLSX.utils.encode_cell({ r, c: 2 })]?.v ?? ''), 10);
+            if (!isNaN(val) && val >= 1 && val <= 128) ids.add(val);
           }
         }
-        // 2) fallback: kolom C berisi ONU ID langsung
-        if (!found) {
-          const val = parseInt(String(ws[XLSX.utils.encode_cell({ r, c: 2 })]?.v ?? ''), 10);
-          if (!isNaN(val) && val >= 1 && val <= 128) ids.add(val);
-        }
+        if (ids.size > 0) break;
       }
+
       setOccupiedIds(ids);
       if (ids.size === 0) toast.error('Tidak ada ONU ID terdeteksi di file tujuan.');
       else toast.success(`File tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
@@ -234,29 +237,76 @@ const PnpExport: React.FC = () => {
   const handleLoadGasTujuan = useCallback(async () => {
     const gasUrl = localStorage.getItem('gasUrl');
     if (!gasUrl) { toast.error('URL Apps Script belum diset.'); return; }
-    try {
-      const res = await fetch(`${gasUrl}?action=loadOltTujuan`);
-      const json = await res.json();
+
+    const collectIds = (json: unknown): Set<number> => {
       const ids = new Set<number>();
-      if (Array.isArray(json?.onuIds)) {
-        json.onuIds.forEach((n: unknown) => {
-          const v = parseInt(String(n), 10);
-          if (v >= 1 && v <= 128) ids.add(v);
-        });
+      const add = (v: unknown) => {
+        const n = parseInt(String(v), 10);
+        if (!isNaN(n) && n >= 1 && n <= 128) ids.add(n);
+      };
+      const walkRow = (row: unknown) => {
+        if (row == null) return;
+        if (typeof row === 'number' || typeof row === 'string') {
+          const s = String(row).trim();
+          if (s.includes('-')) { const id = extractOnuId(s); if (id >= 1 && id <= 128) ids.add(id); }
+          else add(s);
+          return;
+        }
+        if (Array.isArray(row)) {
+          // array of cells: cari username berkode dulu, else angka
+          let found = false;
+          for (const cell of row) {
+            const s = String(cell ?? '').trim();
+            if (s.includes('-')) { const id = extractOnuId(s); if (id >= 1 && id <= 128) { ids.add(id); found = true; break; } }
+          }
+          if (!found) for (const cell of row) {
+            const n = parseInt(String(cell ?? ''), 10);
+            if (!isNaN(n) && n >= 1 && n <= 128) { add(n); break; }
+          }
+          return;
+        }
+        if (typeof row === 'object') {
+          const o = row as Record<string, unknown>;
+          const uname = o.username ?? o.user ?? o.Username ?? o.USER;
+          if (o.onuId !== undefined || o.onu_id !== undefined || o.id !== undefined) add(o.onuId ?? o.onu_id ?? o.id);
+          else if (uname) { const id = extractOnuId(String(uname)); if (id >= 1 && id <= 128) ids.add(id); }
+          else Object.values(o).forEach(walkRow);
+        }
+      };
+      const j = json as Record<string, unknown>;
+      const candidates = [j?.onuIds, j?.data, j?.rows, j?.values, json].filter(Array.isArray) as unknown[][];
+      for (const arr of candidates) {
+        arr.forEach(walkRow);
+        if (ids.size > 0) break;
       }
-      if (ids.size === 0 && Array.isArray(json?.data)) {
-        json.data.forEach((d: { username?: string; onuId?: number | string }) => {
-          const v = d.onuId !== undefined ? parseInt(String(d.onuId), 10) : (d.username ? extractOnuId(d.username) : NaN);
-          if (v >= 1 && v <= 128) ids.add(v);
-        });
-      }
-      if (ids.size === 0) { toast.error('Tujuan: tidak ada ONU ID terdeteksi.'); return; }
-      setOccupiedIds(ids);
-      toast.success(`Tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
-    } catch {
-      toast.error('Gagal load tujuan dari Google Sheet');
+      return ids;
+    };
+
+    const urls = [
+      `${gasUrl}?action=loadOltTujuan`,
+      `${gasUrl}?action=loadOlt&sheet=Sheet2`,
+      `${gasUrl}?action=loadOlt&sheet=2`,
+      `${gasUrl}?action=loadOlt2`,
+      `${gasUrl}?sheet=Sheet2`,
+    ];
+
+    for (const url of urls) {
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
+        let json: unknown;
+        try { json = JSON.parse(text); } catch { continue; }
+        const ids = collectIds(json);
+        if (ids.size > 0) {
+          setOccupiedIds(ids);
+          toast.success(`Tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
+          return;
+        }
+      } catch { /* coba url berikutnya */ }
     }
+    toast.error('Tujuan: tidak ada ONU ID terdeteksi. Pastikan Apps Script punya action loadOltTujuan (Sheet2).');
   }, []);
+
 
 
   // --- Auto-koreksi info ---
