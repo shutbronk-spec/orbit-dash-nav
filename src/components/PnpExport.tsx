@@ -172,7 +172,7 @@ const PnpExport: React.FC = () => {
   }, []);
 
   // --- Parse tujuan file (mode SISIP) ---
-  // Robust: cari ONU ID dari kolom C (angka), atau dari username (segmen terakhir) di kolom manapun.
+  // Workbook yang sama: Sheet1 = data baru, Sheet2 = master tujuan.
   const handleFileTujuan = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -182,9 +182,9 @@ const PnpExport: React.FC = () => {
       const data = new Uint8Array(evt.target?.result as ArrayBuffer);
       const wb = XLSX.read(data, { type: 'array' });
       const ids = new Set<number>();
-      for (const name of wb.SheetNames) {
-        const ws = wb.Sheets[name];
-        if (!ws) continue;
+      const masterName = wb.SheetNames[1];
+      const ws = masterName ? wb.Sheets[masterName] : undefined;
+      if (ws) {
         const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
         for (let r = range.s.r; r <= range.e.r; r++) {
           let found = false;
@@ -200,12 +200,12 @@ const PnpExport: React.FC = () => {
             if (!isNaN(val) && val >= 1 && val <= 128) ids.add(val);
           }
         }
-        if (ids.size > 0) break;
       }
 
       setOccupiedIds(ids);
-      if (ids.size === 0) toast.error('Tidak ada ONU ID terdeteksi di file tujuan.');
-      else toast.success(`File tujuan: ${ids.size} terisi, ${128 - ids.size} kosong`);
+      if (!masterName) toast.error('Sheet2 tidak ditemukan pada file ini.');
+      else if (ids.size === 0) toast.error('Tidak ada ONU ID terdeteksi di Sheet2.');
+      else toast.success(`Sheet2: ${ids.size} terisi, ${128 - ids.size} kosong`);
     };
     reader.readAsArrayBuffer(file);
   }, []);
@@ -268,9 +268,12 @@ const PnpExport: React.FC = () => {
         if (typeof row === 'object') {
           const o = row as Record<string, unknown>;
           const uname = o.username ?? o.user ?? o.Username ?? o.USER;
-          if (o.onuId !== undefined || o.onu_id !== undefined || o.id !== undefined) add(o.onuId ?? o.onu_id ?? o.id);
-          else if (uname) { const id = extractOnuId(String(uname)); if (id >= 1 && id <= 128) ids.add(id); }
-          else Object.values(o).forEach(walkRow);
+          const explicitOnuId = o.onuId ?? o.onu_id ?? o.ONU_ID ?? o['ONU ID'];
+          if (explicitOnuId !== undefined) add(explicitOnuId);
+          else if (uname) {
+            const id = extractOnuId(String(uname));
+            if (id >= 1 && id <= 128) ids.add(id);
+          } else Object.values(o).forEach(walkRow);
         }
       };
       const j = json as Record<string, unknown>;
@@ -282,18 +285,12 @@ const PnpExport: React.FC = () => {
       return ids;
     };
 
-    // Endpoint GAS ini memakai nomor sheet: 1 = data yang diubah, 2 = master tujuan.
-    // Jangan membandingkan isi kedua sheet karena ONU ID keduanya bisa saja kebetulan sama.
+    // Hanya endpoint khusus master yang boleh dipakai. action=loadOlt selalu membaca
+    // Sheet1 pada GAS lama walau diberi parameter sheet=2, sehingga menghasilkan lubang yang salah.
     const urls = [
-      `${gasUrl}?action=loadOlt&sheet=2&_=${Date.now()}`,
-      `${gasUrl}?action=loadOltTujuan`,
-      `${gasUrl}?action=loadOlt&sheet=Sheet2`,
-      `${gasUrl}?action=loadOlt&sheetName=Sheet2`,
-      `${gasUrl}?action=loadOlt&tab=Sheet2`,
-      `${gasUrl}?action=loadSheet2`,
-      `${gasUrl}?action=loadOlt2`,
-      `${gasUrl}?action=loadMaster`,
-      `${gasUrl}?sheet=Sheet2`,
+      `${gasUrl}?action=loadOltTujuan&_=${Date.now()}`,
+      `${gasUrl}?action=loadMaster&_=${Date.now()}`,
+      `${gasUrl}?action=loadSheet2&_=${Date.now()}`,
     ];
 
     for (const url of urls) {
@@ -312,7 +309,9 @@ const PnpExport: React.FC = () => {
       } catch { /* coba url berikutnya */ }
     }
 
-    toast.error('Sheet2 tidak mengembalikan ONU ID. Periksa isi master pada Sheet2.');
+    setOccupiedIds(new Set());
+    setFileTujuanName('');
+    toast.error('GAS belum mengembalikan master Sheet2; hasil SISIP dibatalkan agar tidak salah.');
   }, []);
 
 
