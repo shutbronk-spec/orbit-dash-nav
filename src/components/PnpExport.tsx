@@ -282,45 +282,38 @@ const PnpExport: React.FC = () => {
       return ids;
     };
 
-    // Sheet1 = data yang mau dirubah, Sheet2 = master data OLT tujuan.
-    const sheet1Ids = new Set(rawRows.map((r) => extractOnuId(r.username)).filter((n) => n >= 1 && n <= 128));
-    const sameAsSheet1 = (ids: Set<number>) =>
-      sheet1Ids.size > 0 && ids.size === sheet1Ids.size && [...ids].every((v) => sheet1Ids.has(v));
-
+    // Endpoint GAS ini memakai nomor sheet: 1 = data yang diubah, 2 = master tujuan.
+    // Jangan membandingkan isi kedua sheet karena ONU ID keduanya bisa saja kebetulan sama.
     const urls = [
+      `${gasUrl}?action=loadOlt&sheet=2&_=${Date.now()}`,
       `${gasUrl}?action=loadOltTujuan`,
       `${gasUrl}?action=loadOlt&sheet=Sheet2`,
       `${gasUrl}?action=loadOlt&sheetName=Sheet2`,
       `${gasUrl}?action=loadOlt&tab=Sheet2`,
-      `${gasUrl}?action=loadOlt&sheet=2`,
       `${gasUrl}?action=loadSheet2`,
       `${gasUrl}?action=loadOlt2`,
       `${gasUrl}?action=loadMaster`,
       `${gasUrl}?sheet=Sheet2`,
     ];
 
-    let fallback: Set<number> | null = null;
     for (const url of urls) {
       try {
         const res = await fetch(url);
+        if (!res.ok) continue;
         const text = await res.text();
         let json: unknown;
         try { json = JSON.parse(text); } catch { continue; }
         const ids = collectIds(json);
         if (ids.size === 0) continue;
-        if (sameAsSheet1(ids)) { fallback = ids; continue; } // itu Sheet1, bukan master
         setOccupiedIds(ids);
+        setFileTujuanName('Google Sheet — Sheet2');
         toast.success(`Master Sheet2: ${ids.size} ONU terisi, ${128 - ids.size} lubang kosong`);
         return;
       } catch { /* coba url berikutnya */ }
     }
-    if (fallback) {
-      toast.error('Apps Script hanya mengembalikan Sheet1. Tambahkan action "loadOltTujuan" yang membaca Sheet2.');
-      return;
-    }
 
-    toast.error('Tujuan: tidak ada ONU ID terdeteksi. Pastikan Apps Script punya action loadOltTujuan (Sheet2).');
-  }, [rawRows]);
+    toast.error('Sheet2 tidak mengembalikan ONU ID. Periksa isi master pada Sheet2.');
+  }, []);
 
 
 
